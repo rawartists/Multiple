@@ -62,7 +62,7 @@ class Multiple extends AbstractField
 	 * @access 	public
 	 * @return	string
 	 */
-	public function form_output()
+	public function formOutput()
 	{
 		// Start the HTML
 		$html = form_dropdown($this->form_slug.'_selections[]', array(), null, 'id="'.$this->form_slug.'" class="skip" placeholder="'.lang_label($this->getParameter('placeholder', 'lang:streams:multiple.placeholder')).'"');
@@ -118,7 +118,7 @@ class Multiple extends AbstractField
 	 * Process before saving
 	 * @return string
 	 */
-	public function pre_save()
+	public function preSave()
 	{
 		// Setup
 		$this->_setup();
@@ -161,7 +161,7 @@ class Multiple extends AbstractField
 	 *
 	 * @return	mixed 	null or string
 	 */
-	public function pre_output()
+	public function preOutput()
 	{
 		if($entry = $this->getRelation())
 		{
@@ -177,7 +177,7 @@ class Multiple extends AbstractField
 	 * Run this when the field gets assigned
 	 * @return void
 	 */
-	public function field_assignment_construct()
+	public function fieldAssignmentConstruct()
 	{
 		// Setup
 		$this->_setup();
@@ -207,7 +207,7 @@ class Multiple extends AbstractField
 	 * Run this when the field gets unassigned
 	 * @return void
 	 */
-	public function field_assignment_destruct()
+	public function fieldAssignmentDestruct()
 	{
 		// Get our table name
 		$table = $this->_makeTableName();
@@ -258,7 +258,7 @@ class Multiple extends AbstractField
 	 * @param  mixed $value
 	 * @return string
 	 */
-	public function param_stream($value = null)
+	public function paramStream($value = null)
 	{
 		$options = Model\Stream::getStreamAssociativeOptions();
 
@@ -270,7 +270,7 @@ class Multiple extends AbstractField
 	 * @param  integer $value
 	 * @return html
 	 */
-	public function param_max_selections($value = '')
+	public function paramMaxSelections($value = '')
 	{
 		return form_input('max_selections', $value);
 	}
@@ -280,7 +280,7 @@ class Multiple extends AbstractField
 	 * @param  string $value
 	 * @return html
 	 */
-	public function param_placeholder($value = '')
+	public function paramPlaceholder($value = '')
 	{
 		return form_input('placeholder', $value);
 	}
@@ -290,7 +290,7 @@ class Multiple extends AbstractField
 	 * @param  string $value
 	 * @return html
 	 */
-	public function param_value_field($value = '')
+	public function paramValueField($value = '')
 	{
 		return form_input('value_field', $value);
 	}
@@ -300,7 +300,7 @@ class Multiple extends AbstractField
 	 * @param  string $value
 	 * @return html
 	 */
-	public function param_label_field($value = '')
+	public function paramLabelField($value = '')
 	{
 		return form_input('label_field', $value);
 	}
@@ -310,7 +310,7 @@ class Multiple extends AbstractField
 	 * @param  string $value
 	 * @return html
 	 */
-	public function param_search_field($value = '')
+	public function paramSearchField($value = '')
 	{
 		return form_input('search_field', $value);
 	}
@@ -323,7 +323,7 @@ class Multiple extends AbstractField
 	 * @param  string $value
 	 * @return html
 	 */
-	public function param_template($value = '')
+	public function paramTemplate($value = '')
 	{
 		return form_input('template', $value);
 	}
@@ -334,7 +334,7 @@ class Multiple extends AbstractField
 	 * @param  string $value
 	 * @return html
 	 */
-	public function param_module_slug($value = '')
+	public function paramModuleSlug($value = '')
 	{
 		return form_input('module_slug', $value);
 	}
@@ -344,7 +344,7 @@ class Multiple extends AbstractField
 	 * @param  string $value
 	 * @return html
 	 */
-	public function param_relation_class($value = '')
+	public function paramRelationClass($value = '')
 	{
 		return form_input('relation_class', $value);
 	}
@@ -353,7 +353,7 @@ class Multiple extends AbstractField
 	// -------------------------	AJAX 	  ------------------------------ //
 	///////////////////////////////////////////////////////////////////////////
 
-	public function ajax_search()
+	public function ajaxSearch()
 	{
 		/**
 		 * Determine the stream
