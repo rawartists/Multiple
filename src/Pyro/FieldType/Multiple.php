@@ -36,7 +36,7 @@ class Multiple extends AbstractField
 		'template',
 		'module_slug',
 		'relation_class'
-		);
+	);
 
 	/**
 	 * About meh
@@ -53,7 +53,7 @@ class Multiple extends AbstractField
 	 */
 	public function relation()
 	{
-		return $this->belongsToEntry($this->getParameter('relation_class', 'Pyro\Module\Streams_core\Core\Model\Entry'));
+		return $this->belongsToManyEntries($this->getParameter('relation_class', 'Pyro\Module\Streams_core\Core\Model\Entry'));
 	}
 
 	/**
@@ -62,7 +62,7 @@ class Multiple extends AbstractField
 	 * @access 	public
 	 * @return	string
 	 */
-	public function formOutput()
+	public function formInput()
 	{
 		// Start the HTML
 		$html = form_dropdown($this->form_slug.'_selections[]', array(), null, 'id="'.$this->form_slug.'" class="skip" placeholder="'.lang_label($this->getParameter('placeholder', 'lang:streams:multiple.placeholder')).'"');
@@ -91,7 +91,7 @@ class Multiple extends AbstractField
 	 * @access 	public
 	 * @return	string
 	 */
-	public function filterOutput()
+	public function filterInput()
 	{
 		// Start the HTML
 		$html = form_dropdown($this->getFilterSlug('contains'), array(), null, 'id="'.$this->getFilterSlug('contains').'" class="skip" placeholder="'.$this->field->field_name.'"');
@@ -124,12 +124,12 @@ class Multiple extends AbstractField
 		$this->_setup();
 
 		// Delete existing
-		ci()->pdb->table($this->table)->where('entry_id', $this->entry->id)->delete();
+		ci()->pdb->table($this->table)->where('entry_id', $this->entry->getKey())->delete();
 
 		// Process / insert
 		$insert = array();
 
-		foreach ((array) ci()->input->post($this->form_slug.'_selections') as $id) {
+		foreach ((array) $this->getSelectionsValue() as $id) {
 
 			// Gotta have an ID
 			if (empty($id) or $id < 1) continue;
@@ -138,13 +138,13 @@ class Multiple extends AbstractField
 			$insert[] = array(
 				'entry_id' => $this->entry->getKey(),
 				'related_id' => $id
-				);
+			);
 		}
 
 		// Insert new records
 		if (! empty($insert)) 
 		{
-			ci()->pdb->table($this->table)->where('entry_id', $this->entry_id)->insert($insert);
+			ci()->pdb->table($this->table)->where('entry_id', $this->entry->getKey())->insert($insert);
 		}
 
 		// Return the count
@@ -161,13 +161,11 @@ class Multiple extends AbstractField
 	 *
 	 * @return	mixed 	null or string
 	 */
-	public function preOutput()
+	public function stringOutput()
 	{
-		if($entry = $this->getRelation())
+		if($entries = $this->getRelation() and ! $entries->isEmpty())
 		{
-			$stream = $entry->getStream();
-		
-			return '<a href="'.site_url('admin/streams/entries/view/'.$stream->id.'/'.$entry->getKey()).'">'.$entry->getTitleColumnValue().'</a>';
+			return implode(', ',$entries->lists('author', 'id'));
 		}
 
 		return null;
@@ -211,7 +209,9 @@ class Multiple extends AbstractField
 	{
 		// Get our table name
 		$table = $this->_makeTableName();
-
+		
+		$schema = ci()->pdb->getSchemaBuilder();
+		
 		// Drop it like it's hot
 		$schema->dropIfExists($table);
 	}
@@ -252,18 +252,6 @@ class Multiple extends AbstractField
 	///////////////////////////////////////////////////////////////////////////////
 	// -------------------------	PARAMETERS 	  ------------------------------ //
 	///////////////////////////////////////////////////////////////////////////////
-
-	/**
-	 * Choose a stream to relate to.. or remote source
-	 * @param  mixed $value
-	 * @return string
-	 */
-	public function paramStream($value = null)
-	{
-		$options = Model\Stream::getStreamAssociativeOptions();
-
-		return form_dropdown('stream', $options, $value);
-	}
 
 	/**
 	 * Define the maximum amount of selection allowed
@@ -337,16 +325,6 @@ class Multiple extends AbstractField
 	public function paramModuleSlug($value = '')
 	{
 		return form_input('module_slug', $value);
-	}
-
-	/**
-	 * Define an override of the relation_class
-	 * @param  string $value
-	 * @return html
-	 */
-	public function paramRelationClass($value = '')
-	{
-		return form_input('relation_class', $value);
 	}
 
 	///////////////////////////////////////////////////////////////////////////
