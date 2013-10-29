@@ -19,8 +19,6 @@ class Multiple extends AbstractField
 	public $version = '1.0';
 
 	public $alt_process = true;
-
-	public $table;
 	
 	/**
 	 * Field options
@@ -208,12 +206,29 @@ class Multiple extends AbstractField
 	public function fieldAssignmentDestruct()
 	{
 		// Get our table name
-		$table = $this->_makeTableName();
-		
+		$this->setTable();
+
+		// Get the schema
 		$schema = ci()->pdb->getSchemaBuilder();
-		
+
 		// Drop it like it's hot
-		$schema->dropIfExists($table);
+		$schema->dropIfExists($this->table);
+	}
+
+	/**
+	 * Do this when the namespace is destroyed
+	 * @return void
+	 */
+	public function namespaceDestruct()
+	{
+		// Get our table name
+		$this->setTable();
+
+		// Get the schema
+		$schema = ci()->pdb->getSchemaBuilder();
+
+		// Drop it like it's hot
+		$schema->dropIfExists($this->table);
 	}
 
 	/**
