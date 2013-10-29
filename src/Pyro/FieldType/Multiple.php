@@ -121,7 +121,7 @@ class Multiple extends AbstractField
 	public function preSave()
 	{
 		// Setup
-		$this->_setup();
+		$this->setTable();
 
 		// Delete existing
 		ci()->pdb->table($this->table)->where('entry_id', $this->entry->getKey())->delete();
@@ -178,7 +178,7 @@ class Multiple extends AbstractField
 	public function fieldAssignmentConstruct()
 	{
 		// Setup
-		$this->_setup();
+		$this->setTable();
 
 		// Duplicate our instance
 		$instance = $this;
@@ -224,7 +224,7 @@ class Multiple extends AbstractField
 	{
 		if (isset($this->entry->id)) {
 			// Setup
-			$this->_setup();
+			$this->setTable();
 
 			// Delete by entry_id or related_id
 			ci()->pdb
@@ -243,7 +243,7 @@ class Multiple extends AbstractField
 	 * Create some shit
 	 * @return string
 	 */
-	public function _setup()
+	public function setTable()
 	{
 		// Table name
 		$this->table = $this->stream->stream_prefix.$this->stream->stream_slug.'_'.$this->field->field_slug;
