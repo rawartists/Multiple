@@ -71,7 +71,8 @@ class Multiple extends AbstractField
 			array(
 				'form_slug' => $this->form_slug,
 				'field_slug' => $this->field->field_slug,
-				'stream' => $this->getParameter('stream'),
+				'stream_namespace' => $this->stream->stream_namespace,
+				'stream_param' => $this->getParameter('stream'),
 				'max_selections' => $this->getParameter('max_selections', 'null'),
 				'value_field' => $this->getParameter('value_field', 'id'),
 				'label_field' => $this->getParameter('label_field', 'id'),
@@ -100,7 +101,8 @@ class Multiple extends AbstractField
 			array(
 				'form_slug' => $this->getFilterSlug('contains'),
 				'field_slug' => $this->field->field_slug,
-				'stream' => $this->getParameter('stream'),
+				'stream_namespace' => $this->stream->stream_namespace,
+				'stream_param' => $this->getParameter('stream'),
 				'max_selections' => 1,
 				'value_field' => $this->getParameter('value_field', 'id'),
 				'label_field' => $this->getParameter('label_field', 'id'),
@@ -351,20 +353,21 @@ class Multiple extends AbstractField
 		/**
 		 * Determine the stream
 		 */
-		$stream = explode('.', ci()->uri->segment(6));
+		$stream = explode('.', ci()->uri->segment(7));
 		$stream = Model\Stream::findBySlugAndNamespace($stream[0], $stream[1]);
 
 
 		/**
 		 * Determine our field / type
 		 */
-		$field = Model\Field::findBySlugAndNamespace(ci()->uri->segment(7), $stream->stream_namespace);
+		$field = Model\Field::findBySlugAndNamespace(ci()->uri->segment(8), ci()->uri->segment(6));
+		$field_type = $field->getType(null);
 
 
 		/**
 		 * Get our entries
 		 */
-		$entries = Model\Entry::stream($stream->stream_slug, $stream->stream_namespace)->where($stream->title_column, 'LIKE', '%'.ci()->input->get('query').'%')->take(10)->get();
+		$entries = Model\Entry::stream($stream->stream_slug, $stream->stream_namespace)->where($field_type->getParameter('search_field'), 'LIKE', '%'.ci()->input->get('query').'%')->take(10)->get();
 
 
 		/**
