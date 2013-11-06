@@ -77,6 +77,7 @@ class Multiple extends AbstractField
 				'value_field' => $this->getParameter('value_field', 'id'),
 				'label_field' => $this->getParameter('label_field', 'id'),
 				'search_field' => $this->getParameter('search_field', 'id'),
+				'value' => $this->getValueEntries(),
 				),
 			false
 			);
@@ -107,6 +108,7 @@ class Multiple extends AbstractField
 				'value_field' => $this->getParameter('value_field', 'id'),
 				'label_field' => $this->getParameter('label_field', 'id'),
 				'search_field' => $this->getParameter('search_field', 'id'),
+				'value' => $this->getValueEntry(),
 				),
 			false
 			);
@@ -386,5 +388,40 @@ class Multiple extends AbstractField
 
 		header('Content-type: application/json');
 		echo json_encode(array('entries' => $entries));
+	}
+
+	///////////////////////////////////////////////////////////////////////////////
+	// -------------------------	UTILITIES 	  ------------------------------ //
+	///////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * Get values for dropdown
+	 * @param  mixed $value string or bool
+	 * @return object
+	 */
+	protected function getValueEntries($value = false)
+	{
+		// Setup
+		$this->setTable();
+
+		// Determine a value
+		$values = ci()->pdb->table($this->table)->where('entry_id', '=', $this->entry->id)->get();
+
+		// Break apart the stream
+		$stream = explode('.', $this->getParameter('stream'));
+		$stream = Model\Stream::findBySlugAndNamespace($stream[0], $stream[1]);
+
+
+		// Get our fields for the select		
+		$fields = array_unique(
+			array(
+				$this->getParameter('value_field', 'id'),
+				$this->getParameter('label_field', $stream->title_column),
+				$this->getParameter('search_field', $stream->title_column),
+				)
+			);
+
+		// Boom
+		return Model\Entry::stream($stream->stream_slug, $stream->stream_namespace)->select($fields)->where($this->getParameter('value_field'), '=', $value)->first();
 	}
 }
