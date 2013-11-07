@@ -77,7 +77,7 @@ class Multiple extends AbstractField
 				'value_field' => $this->getParameter('value_field', 'id'),
 				'label_field' => $this->getParameter('label_field', 'id'),
 				'search_field' => $this->getParameter('search_field', 'id'),
-				'value' => $this->getValueEntries(),
+				//'value' => $this->getValueEntries(),
 				),
 			false
 			);
@@ -108,7 +108,7 @@ class Multiple extends AbstractField
 				'value_field' => $this->getParameter('value_field', 'id'),
 				'label_field' => $this->getParameter('label_field', 'id'),
 				'search_field' => $this->getParameter('search_field', 'id'),
-				'value' => $this->getValueEntry(),
+				//'value' => $this->getValueEntry(),
 				),
 			false
 			);
