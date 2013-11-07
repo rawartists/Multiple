@@ -164,10 +164,10 @@ class Multiple extends AbstractField
 	 * @return	mixed 	null or string
 	 */
 	public function stringOutput()
-	{
-		if($entries = $this->getRelation() and ! $entries->isEmpty())
+	{return 'FUCK';
+		if($entries = $this->relation() and ! $entries->isEmpty())
 		{
-			return implode(', ',$entries->lists('author', 'id'));
+			return implode(', ',$entries->lists('id'));
 		}
 
 		return null;
