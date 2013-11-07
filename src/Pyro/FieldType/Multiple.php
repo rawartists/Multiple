@@ -164,8 +164,8 @@ class Multiple extends AbstractField
 	 * @return	mixed 	null or string
 	 */
 	public function stringOutput()
-	{return 'FUCK';
-		if($entries = $this->relation() and ! $entries->isEmpty())
+	{
+		if($entries = $this->getRelationResult() and ! $entries->isEmpty())
 		{
 			return implode(', ',$entries->lists('id'));
 		}
@@ -384,7 +384,7 @@ class Multiple extends AbstractField
 		/**
 		 * Stash the title_column just in case nothing is defined later
 		 */
-		$entries = $entries->unformatted()->toArray();
+		$entries = $entries->toArray();
 
 		header('Content-type: application/json');
 		echo json_encode(array('entries' => $entries));
