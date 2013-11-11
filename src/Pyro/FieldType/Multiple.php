@@ -367,7 +367,7 @@ class Multiple extends AbstractField
 		 * Determine our field / type
 		 */
 		$field = Model\Field::findBySlugAndNamespace(ci()->uri->segment(8), ci()->uri->segment(6));
-		$field_type = $field->getType(null);
+		$field_type = $field->getType();
 
 
 		/**
@@ -376,7 +376,7 @@ class Multiple extends AbstractField
 		
 		$fields = array_unique(
 			array(
-				$field_type->getParameter('value_field'),
+				$field_type->getParameter('value_field', 'id'),
 				$field_type->getParameter('label_field'),
 				$field_type->getParameter('search_field'),
 				)
