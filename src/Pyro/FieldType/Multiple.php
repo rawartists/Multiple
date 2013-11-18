@@ -1,6 +1,8 @@
 <?php namespace Pyro\FieldType;
 
 use Pyro\Module\Streams_core\EntryModel;
+use Pyro\Module\Streams_core\StreamModel;
+use Pyro\Module\Streams_core\FieldModel;
 use Pyro\Module\Streams_core\AbstractFieldType;
 
 /**
@@ -53,7 +55,7 @@ class Multiple extends AbstractFieldType
 	 */
 	public function relation()
 	{
-		return $this->belongsToManyEntries($this->getParameter('relation_class', 'Pyro\Module\Streams_core\Core\Model\Entry'));
+		return $this->belongsToManyEntries($this->getParameter('relation_class', 'Pyro\Module\Streams_core\EntryModel'));
 	}
 
 	/**
@@ -358,13 +360,13 @@ class Multiple extends AbstractFieldType
 		 * Determine the stream
 		 */
 		$stream = explode('.', ci()->uri->segment(7));
-		$stream = Model\Stream::findBySlugAndNamespace($stream[0], $stream[1]);
+		$stream = StreamModel::findBySlugAndNamespace($stream[0], $stream[1]);
 
 
 		/**
 		 * Determine our field / type
 		 */
-		$field = Model\Field::findBySlugAndNamespace(ci()->uri->segment(8), ci()->uri->segment(6));
+		$field = FieldModel::findBySlugAndNamespace(ci()->uri->segment(8), ci()->uri->segment(6));
 		$field_type = $field->getType();
 
 
@@ -380,7 +382,7 @@ class Multiple extends AbstractFieldType
 				)
 			);
 
-		$entries = Model\EntryModel::stream($stream->stream_slug, $stream->stream_namespace)->select($fields)->where($field_type->getParameter('search_field'), 'LIKE', '%'.ci()->input->get('query').'%')->take(10)->get();
+		$entries = EntryModel::stream($stream->stream_slug, $stream->stream_namespace)->select($fields)->where($field_type->getParameter('search_field'), 'LIKE', '%'.ci()->input->get('query').'%')->take(10)->get();
 
 
 		/**
@@ -405,7 +407,7 @@ class Multiple extends AbstractFieldType
 	{
 		// Break apart the stream
 		$stream = explode('.', $this->getParameter('stream'));
-		$stream = Model\Stream::findBySlugAndNamespace($stream[0], $stream[1]);
+		$stream = StreamModel::findBySlugAndNamespace($stream[0], $stream[1]);
 
 		// Boom
 		return $this->getRelationResult()->getEntryOptions($stream->title_column);
