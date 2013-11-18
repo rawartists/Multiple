@@ -1,16 +1,14 @@
 <?php namespace Pyro\FieldType;
 
-use Pyro\Module\Streams_core\Cp;
-use Pyro\Module\Streams_core\Data;
-use Pyro\Module\Streams_core\Core\Model;
-use Pyro\Module\Streams_core\Core\Field\AbstractField;
+use Pyro\Module\Streams_core\EntryModel;
+use Pyro\Module\Streams_core\AbstractFieldType;
 
 /**
  * Streams Entry Selector Field Type
  *
  * @package		PyroCMS\Addons\Shared Addons\Field Types
  */
-class Multiple extends AbstractField
+class Multiple extends AbstractFieldType
 {
 	public $field_type_slug = 'multiple';
 
@@ -382,7 +380,7 @@ class Multiple extends AbstractField
 				)
 			);
 
-		$entries = Model\Entry::stream($stream->stream_slug, $stream->stream_namespace)->select($fields)->where($field_type->getParameter('search_field'), 'LIKE', '%'.ci()->input->get('query').'%')->take(10)->get();
+		$entries = Model\EntryModel::stream($stream->stream_slug, $stream->stream_namespace)->select($fields)->where($field_type->getParameter('search_field'), 'LIKE', '%'.ci()->input->get('query').'%')->take(10)->get();
 
 
 		/**
