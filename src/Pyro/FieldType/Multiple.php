@@ -196,7 +196,7 @@ class Multiple extends AbstractFieldType
 	{
 		if($entries = $this->getValueEntries() and ! empty($entries))
 		{
-			return $entries->asPlugin();
+			return $entries;
 		}
 
 		return null;
