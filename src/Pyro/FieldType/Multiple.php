@@ -158,12 +158,7 @@ class Multiple extends AbstractFieldType
 	}
 
 	/**
-	 * Pre Ouput
-	 *
-	 * Process before outputting on the CP. Since
-	 * there is less need for performance on the back end,
-	 * this is accomplished via just grabbing the title column
-	 * and the id and displaying a link (ie, no joins here).
+	 * Pre Ouput String
 	 *
 	 * @return	mixed 	null or string
 	 */
@@ -172,6 +167,36 @@ class Multiple extends AbstractFieldType
 		if($entries = $this->getValueEntries() and ! empty($entries))
 		{
 			return implode(', ', $entries);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Pre Ouput Plugin
+	 *
+	 * @return	mixed 	null or array
+	 */
+	public function pluginOutput()
+	{
+		if($entries = $this->getValueEntries() and ! empty($entries))
+		{
+			return $entries->asPlugin()->toArray();
+		}
+
+		return null;
+	}
+
+	/**
+	 * Pre Ouput Data
+	 *
+	 * @return	mixed 	null or array
+	 */
+	public function dataOutput()
+	{
+		if($entries = $this->getValueEntries() and ! empty($entries))
+		{
+			return $entries->asPlugin();
 		}
 
 		return null;
