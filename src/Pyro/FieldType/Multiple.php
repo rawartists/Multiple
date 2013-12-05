@@ -55,7 +55,7 @@ class Multiple extends AbstractFieldType
 	 */
 	public function relation()
 	{
-		return $this->belongsToManyEntries($this->getParameter('relation_class', 'Pyro\Module\Streams_core\EntryModel'));
+		return $this->belongsToManyEntries($this->getParameter('relation_class', 'Pyro\Module\Streams_core\EntryModel'))->select('*');
 	}
 
 	/**
@@ -396,18 +396,21 @@ class Multiple extends AbstractFieldType
 
 
 		/**
-		 * Get our entries
+		 * Determine our select
 		 */
-		
-		$fields = array_unique(
-			array(
-				$field_type->getParameter('value_field', 'id'),
-				$field_type->getParameter('label_field'),
-				$field_type->getParameter('search_field'),
+		$select = array_unique(
+			array_merge(
+				array_values(explode('|', $field->getParameter('value_field', 'id'))),
+				array_values(explode('|', $field->getParameter('label_field').'|site')),
+				array_values(explode('|', $field->getParameter('search_field')))
 				)
 			);
 
-		$entries = EntryModel::stream($stream->stream_slug, $stream->stream_namespace)->select($fields)->where($field_type->getParameter('search_field'), 'LIKE', '%'.ci()->input->get('query').'%')->take(10)->get();
+
+		/**
+		 * Get our entries
+		 */
+		$entries = EntryModel::stream($stream->stream_slug, $stream->stream_namespace)->select($select)->where($field_type->getParameter('search_field'), 'LIKE', '%'.ci()->input->get('query').'%')->take(10)->get();
 
 
 		/**
