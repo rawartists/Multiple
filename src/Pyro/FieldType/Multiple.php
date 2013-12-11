@@ -91,7 +91,7 @@ class Multiple extends AbstractFieldType
 			$this->runtime_cache[$hash] = $this->belongsToManyEntries($this->getParameter('relation_class', 'Pyro\Module\Streams_core\EntryModel'))->select('*');
 		}
 
-		$this->runtime_cache[$hash];
+		return $this->runtime_cache[$hash];
 	}
 
 	/**
