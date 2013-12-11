@@ -50,11 +50,21 @@ class Multiple extends AbstractFieldType
 	///////////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * Called before the form is built.
+	 * Run before form is built
 	 *
 	 * @return	void
 	 */
 	public function event()
+	{
+		$this->appendMetadata($this->view('fragments/multiple.js.php'));
+	}
+
+	/**
+	 * Run before table is built
+	 *
+	 * @return	void
+	 */
+	public function filterEvent()
 	{
 		$this->appendMetadata($this->view('fragments/multiple.js.php'));
 	}
@@ -221,9 +231,9 @@ class Multiple extends AbstractFieldType
 	 */
 	public function pluginOutput()
 	{
-		if($entries = $this->getValueEntries() and ! empty($entries))
+		if($entries = $this->getRelationResult() and ! empty($entries))
 		{
-			return $entries->asPlugin()->toArray();
+			return $entries->toArray();
 		}
 
 		return null;
@@ -236,7 +246,7 @@ class Multiple extends AbstractFieldType
 	 */
 	public function dataOutput()
 	{
-		if($entries = $this->getValueEntries() and ! empty($entries))
+		if($entries = $this->getRelationResult() and ! empty($entries))
 		{
 			return $entries;
 		}
