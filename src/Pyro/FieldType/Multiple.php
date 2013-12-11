@@ -50,6 +50,16 @@ class Multiple extends AbstractFieldType
 	///////////////////////////////////////////////////////////////////////////////
 
 	/**
+	 * Called before the form is built.
+	 *
+	 * @return	void
+	 */
+	public function event()
+	{
+		$this->appendMetadata($this->view('fragments/multiple.js.php'));
+	}
+
+	/**
 	 * Relation
 	 * @return object The relation object
 	 */
@@ -66,27 +76,38 @@ class Multiple extends AbstractFieldType
 	 */
 	public function formInput()
 	{
+		// Entry options
+		$options = $this->getRelationResult();
+
+		// To array
+		if ($options) $options = $options->toArray(); else array();
+
+		// Data
+		$data = '
+			data-options="'.json_encode($options).'"
+			data-form_slug="'.$this->form_slug.'"
+			data-field_slug="'.$this->field->field_slug.'"
+			data-stream_param="'.$this->getParameter('stream').'"
+			data-stream_namespace="'.$this->stream->stream_namespace.'"
+			
+			data-max_selections="'.$this->getParameter('max_selections', '1').'"
+
+			data-value_field="'.$this->getParameter('value_field', 'id').'"
+			data-label_field="'.$this->getParameter('label_field', '_title_column').'"
+			data-search_field="'.$this->getParameter('search_field', '_title_column').'"
+			
+			id="'.$this->form_slug.'"
+			class="skip selectize-multiple"
+			placeholder="'.lang_label($this->getParameter('placeholder', 'lang:streams:multiple.placeholder')).'"
+			';
+
 		// Start the HTML
-		$html = form_dropdown($this->form_slug.'_selections[]', array(), null, 'id="'.$this->form_slug.'" class="skip" placeholder="'.lang_label($this->getParameter('placeholder', 'lang:streams:multiple.placeholder')).'"');
-
-		// Append our JS to the HTML since it's special
-		$html .= $this->view(
-			'fragments/multiple.js.php',
-			array(
-				'form_slug' => $this->form_slug,
-				'field_slug' => $this->field->field_slug,
-				'stream_namespace' => $this->stream->stream_namespace,
-				'stream_param' => $this->getParameter('stream'),
-				'max_selections' => $this->getParameter('max_selections', 'null'),
-				'value_field' => $this->getParameter('value_field', 'id'),
-				'label_field' => $this->getParameter('label_field', 'id'),
-				'search_field' => $this->getParameter('search_field', 'id'),
-				'value' => $this->getValueEntries(),
-				),
-			false
+		return form_dropdown(
+			$this->form_slug,
+			array(),
+			null,
+			$data
 			);
-
-		return $html;
 	}
 
 	/**
@@ -401,7 +422,7 @@ class Multiple extends AbstractFieldType
 		$select = array_unique(
 			array_merge(
 				array_values(explode('|', $field->getParameter('value_field', 'id'))),
-				array_values(explode('|', $field->getParameter('label_field').'|site')),
+				array_values(explode('|', $field->getParameter('label_field'))),
 				array_values(explode('|', $field->getParameter('search_field')))
 				)
 			);

@@ -2,45 +2,57 @@
 
 	$(document).ready(function() {
 
-		var selectize = $('#<?php echo $form_slug; ?>');
+		// Trigger em all
+		$('select.selectize-multiple').each(function() {
 
-		selectize.selectize({
-			maxItems: <?php echo $max_selections; ?>,
-			valueField: '<?php echo $value_field; ?>',
-			labelField: '<?php echo $label_field; ?>',
-			searchField: '<?php echo $search_field; ?>',
-			options: [],
-			create: false,
-			render: {
-				/*item: function(item, escape) {
-					return '<div>' +
-						(item.name ? '<span class="name">' + escape(item.name) + '</span>' : '') +
-						(item.email ? '<span class="email">' + escape(item.email) + '</span>' : '') +
-					'</div>';
-				},*/
-				option: function(item, escape) {
-					return '<div>' + item.<?php echo $label_field; ?> + '</div>';
-				}
-			},
-			load: function(query, callback) {
-				if (!query.length) return callback();
+			var input = $(this);
+			var options = input.attr('data-options') == 'null' ? null : [$.parseJSON(input.attr('data-options'))];
 
-				$('#<?php echo $form_slug; ?>').parent('div').find('.selectize-control').addClass('loading');
-				
-				$.ajax({
-					url: SITE_URL + 'streams_core/public_ajax/field/multiple/search/<?php echo $stream_namespace; ?>/<?php echo $stream_param; ?>/<?php echo $field_slug; ?>?query=' + encodeURIComponent(query),
-					type: 'GET',
-					error: function() {
-						callback();
-					},
-					success: function(results) {
-						callback(results.entries);
+			input.selectize({
+				maxItems: input.attr('data-max_selections'),
+				valueField: input.attr('data-value_field'),
+				labelField: input.attr('data-label_field'),
+				searchField: input.attr('data-search_field'),
+
+				options: options,
+
+				create: false,
+				render: {
+					/*item: function(item, escape) {
+						return '<div>' +
+							(item.name ? '<span class="name">' + escape(item.name) + '</span>' : '') +
+							(item.email ? '<span class="email">' + escape(item.email) + '</span>' : '') +
+						'</div>';
+					},*/
+					option: function(item, escape) {
+						return '<div>' + item[input.attr('data-label_field')] + '</div>';
 					}
-				});
-			}
-		});
+				},
+				load: function(query, callback) {
+					if (!query.length) return callback();
+					
+					input.parent('div').find('.selectize-control').addClass('loading');
 
-		// Add our loader
-		$('#<?php echo $form_slug; ?>').parent('div').find('.selectize-control').append('<?php echo Asset::img('loaders/808080.png', null, array('class' => 'animated spin spinner')); ?>');
+					$.ajax({
+						url: SITE_URL + 'streams_core/public_ajax/field/multiple/search/' + input.attr('data-stream_namespace') + '/' + input.attr('data-stream_param') + '/' + input.attr('data-field_slug') + '?query=' + encodeURIComponent(query),
+						type: 'GET',
+						error: function() {
+							callback();
+						},
+						success: function(results) {
+							callback(results.entries);
+						}
+					});
+				}
+			});
+
+			// Set the value
+			if (options) {
+				input[0].selectize.setValue(input.attr('data-value'));
+			}
+
+			// Add our loader
+			input.parent('div').find('.selectize-control').append('<?php echo Asset::img('loaders/808080.png', null, array('class' => 'animated spin spinner')); ?>');
+		});
 	});
 </script>
