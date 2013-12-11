@@ -6,7 +6,7 @@
 		$('select.selectize-multiple').each(function() {
 
 			var input = $(this);
-			var options = input.attr('data-options') == 'null' ? null : [$.parseJSON(input.attr('data-options'))];
+			var options = input.attr('data-options') == 'null' ? null : $.parseJSON(input.attr('data-options'));
 
 			input.selectize({
 				maxItems: input.attr('data-max_selections'),
@@ -48,7 +48,9 @@
 
 			// Set the value
 			if (options) {
-				input[0].selectize.setValue(input.attr('data-value'));
+				var value = input.attr('data-value').split(',');
+
+				input[0].selectize.setValue(value);
 			}
 
 			// Add our loader

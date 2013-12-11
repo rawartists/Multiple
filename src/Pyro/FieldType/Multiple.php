@@ -34,7 +34,7 @@ class Multiple extends AbstractFieldType
 		'template',
 		'module_slug',
 		'relation_class'
-	);
+		);
 
 	/**
 	 * About meh
@@ -79,12 +79,19 @@ class Multiple extends AbstractFieldType
 		// Entry options
 		$options = $this->getRelationResult();
 
+		// Gather Ids
+		$value = array();
+
+		foreach ($options as $option)
+			$value[] = $option->id;
+
 		// To array
 		if ($options) $options = $options->toArray(); else array();
 
 		// Data
 		$data = '
-			data-options="'.json_encode($options).'"
+			data-options="'.htmlentities(json_encode($options)).'"
+			data-value="'.htmlentities(implode(',', $value)).'"
 			data-form_slug="'.$this->form_slug.'"
 			data-field_slug="'.$this->field->field_slug.'"
 			data-stream_param="'.$this->getParameter('stream').'"
@@ -103,7 +110,7 @@ class Multiple extends AbstractFieldType
 
 		// Start the HTML
 		return form_dropdown(
-			$this->form_slug,
+			$this->form_slug.'[]',
 			array(),
 			null,
 			$data
@@ -118,27 +125,41 @@ class Multiple extends AbstractFieldType
 	 */
 	public function filterInput()
 	{
+		// Manually fire event
+		self::event();
+
+		// Entry options
+		$options = $this->getRelationResult();
+
+		// To array
+		if ($options) $options = $options->toArray(); else array();
+
+		// Data
+		$data = '
+			data-options="'.htmlentities(json_encode($options)).'"
+			data-form_slug="'.$this->getFilterSlug('is').'"
+			data-field_slug="'.$this->field->field_slug.'"
+			data-stream_param="'.$this->getParameter('stream').'"
+			data-stream_namespace="'.$this->stream->stream_namespace.'"
+			
+			data-max_selections="1"
+
+			data-value_field="'.$this->getParameter('value_field', 'id').'"
+			data-label_field="'.$this->getParameter('label_field', '_title_column').'"
+			data-search_field="'.$this->getParameter('search_field', '_title_column').'"
+			
+			id="'.$this->form_slug.'"
+			class="skip selectize-multiple"
+			placeholder="'.lang_label($this->getParameter('placeholder', 'lang:streams:multiple.placeholder')).'"
+			';
+
 		// Start the HTML
-		$html = form_dropdown($this->getFilterSlug('contains'), array(), null, 'id="'.$this->getFilterSlug('contains').'" class="skip" placeholder="'.$this->field->field_name.'"');
-
-		// Append our JS to the HTML since it's special
-		$html .= $this->view(
-			'fragments/multiple.js.php',
-			array(
-				'form_slug' => $this->getFilterSlug('contains'),
-				'field_slug' => $this->field->field_slug,
-				'stream_namespace' => $this->stream->stream_namespace,
-				'stream_param' => $this->getParameter('stream'),
-				'max_selections' => 1,
-				'value_field' => $this->getParameter('value_field', 'id'),
-				'label_field' => $this->getParameter('label_field', 'id'),
-				'search_field' => $this->getParameter('search_field', 'id'),
-				//'value' => $this->getValueEntry(),
-				),
-			false
+		return form_dropdown(
+			$this->getFilterSlug('is'),
+			array(),
+			null,
+			$data
 			);
-
-		return $html;
 	}
 
 	/**
@@ -156,7 +177,7 @@ class Multiple extends AbstractFieldType
 		// Process / insert
 		$insert = array();
 
-		foreach ((array) $this->getSelectionsValue() as $id) {
+		foreach ((array) ci()->input->post($this->form_slug) as $id) {
 
 			// Gotta have an ID
 			if (empty($id) or $id < 1) continue;
