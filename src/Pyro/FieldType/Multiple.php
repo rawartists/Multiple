@@ -45,6 +45,14 @@ class Multiple extends AbstractFieldType
 		'url' => 'http://www.aiwebsystems.com/'
 		);
 
+	/**
+	 * Runtime funtime cache
+	 * @var array
+	 */
+	public $runtime_cache = array(
+		'pluginOutput' => array(),
+		);
+
 	///////////////////////////////////////////////////////////////////////////////
 	// --------------------------	METHODS 	  ------------------------------ //
 	///////////////////////////////////////////////////////////////////////////////
@@ -75,7 +83,15 @@ class Multiple extends AbstractFieldType
 	 */
 	public function relation()
 	{
-		return $this->belongsToManyEntries($this->getParameter('relation_class', 'Pyro\Module\Streams_core\EntryModel'))->select('*');
+		// Crate our runtime cache hash
+		$hash = md5($this->stream->stream_slug.$this->stream->stream_namespace.$this->field->field_slug.$this->value);
+
+		// Check / retreive hashed storage
+		if (! isset($this->runtime_cache[$hash])) {
+			$this->runtime_cache[$hash] = $this->belongsToManyEntries($this->getParameter('relation_class', 'Pyro\Module\Streams_core\EntryModel'))->select('*');
+		}
+
+		$this->runtime_cache[$hash];
 	}
 
 	/**
@@ -231,12 +247,19 @@ class Multiple extends AbstractFieldType
 	 */
 	public function pluginOutput()
 	{
-		if($entries = $this->getRelationResult() and ! empty($entries))
-		{
-			return $entries->toArray();
-		}
+		// Crate our runtime cache hash
+		$hash = md5($this->stream->stream_slug.$this->stream->stream_namespace.$this->field->field_slug.$this->value);
 
-		return null;
+		if (! isset($this->runtime_cache['pluginOutput'][$hash])) {
+			if ($entry = $this->getRelationResult() and ! empty($entries))
+			{
+				return $this->runtime_cache['pluginOutput'][$hash] = $entries->asPlugin()->toArray();
+			} else {
+				return $this->runtime_cache['pluginOutput'][$hash] = null;
+			}
+		} else {
+			return $this->runtime_cache['pluginOutput'][$hash];
+		}
 	}
 
 	/**
