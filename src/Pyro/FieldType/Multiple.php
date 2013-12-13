@@ -33,7 +33,7 @@ class Multiple extends AbstractFieldType
 		'search_field',
 		'template',
 		'module_slug',
-		'relation_class'
+		'relation_class',
 		);
 
 	/**
@@ -165,7 +165,7 @@ class Multiple extends AbstractFieldType
 			data-stream_param="'.$this->getParameter('stream').'"
 			data-stream_namespace="'.$this->stream->stream_namespace.'"
 			
-			data-max_selections="1"
+			data-max_selections="'.$this->getParameter('max_selections', '1').'"
 
 			data-value_field="'.$this->getParameter('value_field', 'id').'"
 			data-label_field="'.$this->getParameter('label_field', '_title_column').'"
