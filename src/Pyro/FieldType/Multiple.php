@@ -151,9 +151,6 @@ class Multiple extends AbstractFieldType
 	 */
 	public function filterInput()
 	{
-		// Manually fire event
-		self::event();
-
 		// Entry options
 		$options = $this->getRelationResult();
 
