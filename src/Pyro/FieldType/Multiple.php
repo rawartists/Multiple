@@ -487,6 +487,9 @@ class Multiple extends AbstractFieldType
 		$stream = StreamModel::findBySlugAndNamespace($stream[0], $stream[1]);
 
 		// Boom
-		return $this->getRelationResult()->getEntryOptions($stream->title_column);
+		$entries = $this->getRelationResult();
+
+		// Format
+		return $entries ? $entries->getEntryOptions($stream->title_column) : array();
 	}
 }
