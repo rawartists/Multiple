@@ -60,6 +60,12 @@ class Multiple extends AbstractFieldType
 		);
 
 	/**
+	 * Yes please
+	 * @var boolean
+	 */
+	public $alt_process = true;
+
+	/**
 	 * Our pivot table
 	 */
 	public $table = null;
