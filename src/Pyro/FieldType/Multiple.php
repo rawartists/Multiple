@@ -59,6 +59,11 @@ class Multiple extends AbstractFieldType
 		'url' => 'http://pyrocms.com/'
 		);
 
+	/**
+	 * Our pivot table
+	 */
+	public $table = null;
+
 	///////////////////////////////////////////////////////////////////////////////
 	// -------------------------	METHODS 	  ------------------------------ //
 	///////////////////////////////////////////////////////////////////////////////
@@ -145,7 +150,60 @@ class Multiple extends AbstractFieldType
 	 */
 	public function filterInput()
 	{
-		//return form_dropdown($this->form_slug, $this->getOptions(), ci()->input->get($this->getFilterSlug('is')));
+		// Set the value from the thingie
+		$this->setValue(ci()->input->get($this->getFilterSlug('is')));
+
+		// Attribtues
+		$attributes = array(
+			'class' => $this->form_slug.'-selectize skip',
+			'placeholder' => $this->getParameter('placeholder', lang('streams:relationship.placeholder')),
+			);
+
+		// String em up
+		$attribute_string = '';
+
+		foreach ($attributes as $attribute => $value)
+			$attribute_string .= $attribute.'="'.$value.'" ';
+
+		// Return an HTML dropdown
+		return form_dropdown($this->getFilterSlug('is'), array(), null, $attribute_string);
+	}
+
+	/**
+	 * Process before saving
+	 * @return string
+	 */
+	public function preSave()
+	{
+		// Set our table
+		$this->setTable();
+
+		// Delete existing
+		ci()->pdb->table($this->table)->where('entry_id', $this->entry->getKey())->delete();
+
+		// Process / insert
+		$insert = array();
+
+		foreach ((array) ci()->input->post($this->form_slug) as $id) {
+
+			// Gotta have an ID
+			if (empty($id) or $id < 1) continue;
+
+			// Add to our insert
+			$insert[] = array(
+				'entry_id' => $this->entry->getKey(),
+				'related_id' => $id
+				);
+		}
+
+		// Insert new records
+		if (! empty($insert)) 
+		{
+			ci()->pdb->table($this->table)->where('entry_id', $this->entry->getKey())->insert($insert);
+		}
+
+		// Return the count
+		return count($insert);
 	}
 
 	/**
@@ -275,6 +333,15 @@ class Multiple extends AbstractFieldType
 	///////////////////////////////////////////////////////////////////////////////
 	// -------------------------	UTILITIES 	  ------------------------------ //
 	///////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * Return the table needed for pivot
+	 * @return string
+	 */
+	public function setTable()
+	{
+		$this->table = $this->stream->stream_prefix.$this->stream->stream_slug.'_'.$this->field->field_slug;
+	}
 
 	/**
 	 * Relation class

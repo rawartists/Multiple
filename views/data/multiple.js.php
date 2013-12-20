@@ -8,6 +8,9 @@
 		
 		$select.selectize({
 
+			// Plugins yaaaaaa
+			plugins: ['restore_on_backspace', 'optgroup_columns'],
+
 			// Allow multiple
 			<?php if ($field_type->getParameter('max_selections', false)): ?>
 			maxItems: <?php echo $field_type->getParameter('max_selections'); ?>,
@@ -123,9 +126,7 @@
 
 				// Set the value
 				<?php if ($entries): ?>
-				<?php foreach ($entries as $entry): ?>
-				this.setValue('<?php echo $entry->id; ?>');
-				<?php endforeach; ?>
+				this.setValue([<?php echo implode(',', $entries->lists('id')); ?>]);
 				<?php endif; ?>
 			},
 		});
