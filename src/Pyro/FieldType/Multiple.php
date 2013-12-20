@@ -7,7 +7,7 @@ use Pyro\Module\Streams_core\FieldModel;
 use Pyro\Module\Streams_core\StreamModel;
 
 /**
- * PyroStreams Relationship Field Type
+ * PyroStreams Multiple Field Type
  *
  * @package		PyroCMS\Core\Modules\Streams Core\Field Types
  * @author		Parse19
@@ -15,13 +15,13 @@ use Pyro\Module\Streams_core\StreamModel;
  * @license		http://parse19.com/pyrostreams/docs/license
  * @link		http://parse19.com/pyrostreams
  */
-class Relationship extends AbstractFieldType
+class Multiple extends AbstractFieldType
 {
 	/**
 	 * Field type slug
 	 * @var string
 	 */
-	public $field_type_slug = 'relationship';
+	public $field_type_slug = 'multiple';
 
 	/**
 	 * DB column type
@@ -35,6 +35,7 @@ class Relationship extends AbstractFieldType
 	 */
 	public $custom_parameters = array(
 		'stream',
+		'max_selections',
 		'label_field',
 		'search_fields',
 		'placeholder',
@@ -74,7 +75,7 @@ class Relationship extends AbstractFieldType
 		// Basically the selectize config mkay?
 		$this->appendMetadata(
 			$this->view(
-				'data/relationship.js.php',
+				'data/multiple.js.php',
 				array(
 					'field_type' => $this,
 					'entry' => $entry,
