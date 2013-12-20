@@ -8,8 +8,10 @@
 		
 		$select.selectize({
 
-			// Relationship is 1 to 1
-			maxItems: 1,
+			// Allow multiple
+			<?php if ($field_type->getParameter('max_selections', false)): ?>
+			maxItems: <?php echo $field_type->getParameter('max_selections'); ?>,
+			<?php endif; ?>
 
 			// Throttle MS
 			loadThrottle: 300,
@@ -34,9 +36,9 @@
 			// We want to pass it all back though for formatting if applicable
 			searchField: '<?php echo str_replace('|', "','", $field_type->getParameter('search_fields', ($field_type->stream->title_column ? $field_type->stream->title_column : 'id'))); ?>',
 
-			// The value as an entry
-			<?php if ($entry): ?>
-			options: [<?php echo $entry; ?>],
+			// The entries
+			<?php if ($entries): ?>
+			options: <?php echo $entries; ?>,
 			<?php endif; ?>
 
 			/**
@@ -89,7 +91,7 @@
 				$.ajax({
 
 					// Keep this public so we can use this on the front end
-					url: SITE_URL + 'streams_core/public_ajax/field/relationship/search/<?php echo $field_type->form_slug; ?>',
+					url: SITE_URL + 'streams_core/public_ajax/field/multiple/search/<?php echo $field_type->form_slug; ?>',
 
 					// The data!
 					data: {
@@ -120,8 +122,10 @@
 			onInitialize: function() {
 
 				// Set the value
-				<?php if ($entry): ?>
+				<?php if ($entries): ?>
+				<?php foreach ($entries as $entry): ?>
 				this.setValue('<?php echo $entry->id; ?>');
+				<?php endforeach; ?>
 				<?php endif; ?>
 			},
 		});

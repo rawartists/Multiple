@@ -70,7 +70,7 @@ class Multiple extends AbstractFieldType
 	public function fieldEvent()
 	{
 		// Get related entries
-		$entry = $this->getRelationResult();
+		$entries = $this->getRelationResult();
 
 		// Basically the selectize config mkay?
 		$this->appendMetadata(
@@ -78,7 +78,7 @@ class Multiple extends AbstractFieldType
 				'data/multiple.js.php',
 				array(
 					'field_type' => $this,
-					'entry' => $entry,
+					'entries' => $entries,
 					),
 				true
 				)
@@ -106,11 +106,11 @@ class Multiple extends AbstractFieldType
 
 		// If it's an entry model - boomskie
 		if ($instance instanceof EntryModel) {
-			return $this->belongsToEntry($relation_class)->select('*');
+			return $this->belongsToManyEntries($relation_class)->select('*');
 		}
 
 		// Otherwise - boomskie too
-		return $this->belongsTo($relation_class);
+		return $this->belongsToMany($relation_class);
 	}
 
 	/**
@@ -160,9 +160,9 @@ class Multiple extends AbstractFieldType
 	 */
 	public function stringOutput()
 	{
-		if ($entry = $this->getRelationResult())
+		if($entries = $this->getEntriesTitles() and ! empty($entries))
 		{
-			return $entry->getTitleColumnValue();
+			return implode(', ', $entries);
 		}
 
 		return null;
@@ -178,9 +178,9 @@ class Multiple extends AbstractFieldType
 	 */
 	public function pluginOutput()
 	{
-		if ($entry = $this->getRelationResult())
+		if ($entries = $this->getRelationResult() and ! empty($entries))
 		{
-			return $entry->asPlugin();
+			return $entries->asPlugin();
 		}
 
 		return null;
@@ -193,9 +193,9 @@ class Multiple extends AbstractFieldType
 	 */
 	public function dataOutput()
 	{
-		if ($entry = $this->getRelationResult())
+		if ($entries = $this->getRelationResult() and ! empty($entries))
 		{
-			return $entry;
+			return $entries;
 		}
 
 		return null;
@@ -293,5 +293,23 @@ class Multiple extends AbstractFieldType
 	{
 		// Return that shiz
 		return EntryModel::stream($this->getParameter('stream'))->select('id')->count();
+	}
+
+	/**
+	 * Get values for dropdown
+	 * @param  mixed $value string or bool
+	 * @return array
+	 */
+	protected function getEntriesTitles($value = false)
+	{
+		// Break apart the stream
+		$stream = explode('.', $this->getParameter('stream'));
+		$stream = StreamModel::findBySlugAndNamespace($stream[0], $stream[1]);
+
+		// Boom
+		$entries = $this->getRelationResult();
+
+		// Format
+		return $entries ? $entries->getEntryOptions($stream->title_column) : array();
 	}
 }
