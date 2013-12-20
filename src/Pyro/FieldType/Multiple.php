@@ -139,7 +139,7 @@ class Multiple extends AbstractFieldType
 			$attribute_string .= $attribute.'="'.$value.'" ';
 
 		// Return an HTML dropdown
-		return form_dropdown($this->form_slug, array(), null, $attribute_string);
+		return form_dropdown($this->form_slug.'[]', array(), null, $attribute_string);
 	}
 
 	/**
