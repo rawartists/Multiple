@@ -149,6 +149,20 @@ class Multiple extends AbstractFieldType
 	}
 
 	/**
+	 * Output the form input for frontend use
+	 * @return string 
+	 */
+	public function publicFormInput()
+	{
+		// Is this a small enough dataset?
+		if ($this->totalOptions() < 1000) {
+			return form_dropdown($this->form_slug, $this->getOptions(), $this->getValueIds());
+		} else {
+			return form_input($this->form_slug, $this->getValueIds());
+		}
+	}
+
+	/**
 	 * Output filter input
 	 *
 	 * @access 	public
@@ -339,6 +353,59 @@ class Multiple extends AbstractFieldType
 	///////////////////////////////////////////////////////////////////////////////
 	// -------------------------	UTILITIES 	  ------------------------------ //
 	///////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * Get IDs for values
+	 * @return array 
+	 */
+	public function getValueIds()
+	{
+		// List related entry IDs
+		return $this->getRelationResult()->lists('id');
+	}
+
+	/**
+	 * Options
+	 * @return array
+	 */
+	public function getOptions()
+	{
+		// Get options
+		$options = array();
+
+		if ($relation_class = $this->getRelationClass()) {
+
+			$instance = new $relation_class;
+
+			if ($instance instanceof EntryModel) {
+			
+				list($stream_slug, $stream_namespace) = explode('.', $this->getParameter('stream'));
+
+				$stream = StreamModel::findBySlugAndNamespace($stream_slug, $stream_namespace);
+
+				$options = $relation_class::stream($stream_slug, $stream_namespace)->limit(1000)->select('*')->get()->toArray();
+				
+				$option_format = $this->getParameter('option_format', '{{ '.($stream->title_column ? $stream->title_column : 'id').' }}'); 
+
+			} else {
+
+				$options = $relation_class::limit(1000)->select('*')->get()->toArray();
+
+				$option_format = $this->getParameter('option_format', '{{ '.$this->getParameter('title_field', 'id').' }}'); 
+
+			}
+		}
+
+		// Format options
+		$formatted_options = array();
+
+		foreach ($options as $option) {
+				$formatted_options[$option[$this->getParameter('value_field', 'id')]] = ci()->parser->parse_string($option_format, $option, true, false, array(), false);
+		}
+
+		// Boom
+		return $formatted_options;
+	}
 
 	/**
 	 * Return the table needed for pivot
