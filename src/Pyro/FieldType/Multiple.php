@@ -102,21 +102,15 @@ class Multiple extends AbstractFieldType
 	 */
 	public function relation()
 	{
-		// Extract our relationship stream
-		list($stream_slug, $stream_namespace) = explode('.', $this->getParameter('stream'));
-
 		// Get the relationship class
-		if (! $relation_class = $this->getRelationClass()) return null;
+        if (! $relation_class = $this->getRelationClass()) return null;
 
-		// If the stream doesn't exist..
-		if (! $stream = StreamModel::findBySlugAndNamespace($stream_slug, $stream_namespace, true)) return null;
+        // Create a new instance
+        // of our relation class to use/abuse
+        $instance = new $relation_class;
 
-		// Create a new instance
-		// of our relation class to use/abuse
-		$instance = new $relation_class;
-
-		// If it's an entry model - boomskie
-		if ($instance instanceof EntryModel) {
+        // If it's an entry model - boomskie
+        if ($instance instanceof EntryModel) {
 			return $this->belongsToManyEntries($relation_class)->select('*');
 		}
 
@@ -238,8 +232,7 @@ class Multiple extends AbstractFieldType
 	 */
 	public function stringOutput()
 	{
-		if($entries = $this->getEntriesTitles() and ! empty($entries))
-		{
+		if($entries = $this->getEntriesTitles() and $entries) {
 			return implode(', ', $entries);
 		}
 
@@ -442,14 +435,10 @@ class Multiple extends AbstractFieldType
 	 */
 	protected function getEntriesTitles($value = false)
 	{
-		// Break apart the stream
-		$stream = explode('.', $this->getParameter('stream'));
-		$stream = StreamModel::findBySlugAndNamespace($stream[0], $stream[1]);
-
 		// Boom
 		$entries = $this->getRelationResult();
 
 		// Format
-		return $entries ? $entries->getEntryOptions($stream->title_column) : array();
+		return $entries ? $entries->getEntryOptions() : false;
 	}
 }
