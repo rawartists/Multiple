@@ -111,7 +111,7 @@ class Multiple extends AbstractFieldType
 
         // If it's an entry model - boomskie
         if ($instance instanceof EntryModel) {
-			return $this->belongsToManyEntries($relation_class)->select('*');
+			return $this->belongsToManyEntries($relation_class);
 		}
 
 		// Otherwise - boomskie too
