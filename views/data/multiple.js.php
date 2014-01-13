@@ -1,140 +1,140 @@
 <script type="text/javascript">
 
-	
-	// Ready
-	$(document).ready(function() {
+    
+    // Ready
+    $(document).ready(function() {
 
-		var $select = $('select.<?php echo $field_type->form_slug; ?>-selectize');
-		
-		$select.selectize({
+        var $select = $('select.<?php echo $field_type->form_slug; ?>-selectize');
+        
+        $select.selectize({
 
-			// Plugins yaaaaaa
-			plugins: ['restore_on_backspace', 'optgroup_columns'],
+            // Plugins yaaaaaa
+            plugins: ['restore_on_backspace', 'optgroup_columns'],
 
-			// Allow multiple
-			<?php if ($field_type->getParameter('max_selections', false)): ?>
-			maxItems: <?php echo $field_type->getParameter('max_selections'); ?>,
-			<?php endif; ?>
+            // Allow multiple
+            <?php if ($field_type->getParameter('max_selections', false)): ?>
+            maxItems: <?php echo $field_type->getParameter('max_selections'); ?>,
+            <?php endif; ?>
 
-			// Throttle MS
-			loadThrottle: 300,
+            // Throttle MS
+            loadThrottle: 300,
 
-			// Disable creation
-			create: false,
+            // Disable creation
+            create: false,
 
-			// Preload stuff if applicable
-			<?php //if ($field_type->totalOptions() < 1000): ?>
-			//preload: true,
-			<?php //endif; ?>
+            // Preload stuff if applicable
+            <?php //if ($field_type->totalOptions() < 1000): ?>
+            //preload: true,
+            <?php //endif; ?>
 
-			// Let's always use this..
-			valueField: 'id',
+            // Let's always use this..
+            valueField: 'id',
 
-			// What is the default label field?
-			// Note that label_format will override this
-			labelField: '<?php echo $field_type->getParameter('label_field', ($field_type->stream->title_column ? $field_type->stream->title_column : 'id')); ?>',
+            // What is the default label field?
+            // Note that label_format will override this
+            labelField: '<?php echo $field_type->getParameter('label_field', ($field_type->stream->title_column ? $field_type->stream->title_column : 'id')); ?>',
 
-			// Search these fields
-			// This is JS.. so we need it here for the plugin - it will limit the dropdown despite what's passed back w/JSON
-			// We want to pass it all back though for formatting if applicable
-			searchField: '<?php echo str_replace('|', "','", $field_type->getParameter('search_fields', ($field_type->stream->title_column ? $field_type->stream->title_column : 'id'))); ?>',
+            // Search these fields
+            // This is JS.. so we need it here for the plugin - it will limit the dropdown despite what's passed back w/JSON
+            // We want to pass it all back though for formatting if applicable
+            searchField: '<?php echo str_replace('|', "','", $field_type->getParameter('search_fields', ($field_type->stream->title_column ? $field_type->stream->title_column : 'id'))); ?>',
 
-			// The entries
-			<?php if ($entries): ?>
-			options: <?php echo $entries; ?>,
-			<?php endif; ?>
+            // The entries
+            <?php if ($entries): ?>
+            options: <?php echo $entries; ?>,
+            <?php endif; ?>
 
-			/**
-			 * Customize how shit is rendered
-			 * @type {object}
-			 */
-			render: {
+            /**
+             * Customize how shit is rendered
+             * @type {object}
+             */
+            render: {
 
-				/**
-				 * This defines how a selectable item is formatted
-				 * @param  {object} item
-				 * @param  {[type]} escape
-				 * @return {string} using a view, parsed tags or whatever
-				 */
-				<?php if ($field_type->getParameter('item_format', false)): ?>
-				item: function(item, escape) {
-					return <?php echo ci()->parser->parse_string($field_type->getParameter('item_format'), ci(), true); ?>;
-				},
-				<?php endif; ?>
+                /**
+                 * This defines how a selectable item is formatted
+                 * @param  {object} item
+                 * @param  {[type]} escape
+                 * @return {string} using a view, parsed tags or whatever
+                 */
+                <?php if ($field_type->getParameter('item_format', false)): ?>
+                item: function(item, escape) {
+                    return <?php echo ci()->parser->parse_string($field_type->getParameter('item_format'), ci(), true); ?>;
+                },
+                <?php endif; ?>
 
-				/**
-				 * This defines how the selected option is formatted
-				 * @param  {object} item
-				 * @param  {[type]} escape
-				 * @return {string} using a view, parsed tags or whatever
-				 */
-				<?php if ($field_type->getParameter('option_format', false)): ?>
-				option: function(item, escape) {
-					return <?php echo ci()->parser->parse_string($field_type->getParameter('option_format'), ci(), true); ?>;
-				},
-				<?php endif; ?>
-			},
+                /**
+                 * This defines how the selected option is formatted
+                 * @param  {object} item
+                 * @param  {[type]} escape
+                 * @return {string} using a view, parsed tags or whatever
+                 */
+                <?php if ($field_type->getParameter('option_format', false)): ?>
+                option: function(item, escape) {
+                    return <?php echo ci()->parser->parse_string($field_type->getParameter('option_format'), ci(), true); ?>;
+                },
+                <?php endif; ?>
+            },
 
-			/**
-			 * Load from our AJAX public feed
-			 * @param  {string}   term
-			 * @param  {function} callback
-			 * @return {mixed}
-			 */
-			load: function(term, callback) {
+            /**
+             * Load from our AJAX public feed
+             * @param  {string}   term
+             * @param  {function} callback
+             * @return {mixed}
+             */
+            load: function(term, callback) {
 
-				// If the term is less than 3 chars - skip it
-				// this will help reduce server load ya'll
-				if (term.length < 3) return callback();
-				
-				// We're loading..
-				$select.parent('div').find('.selectize-control').addClass('loading');
+                // If the term is less than 3 chars - skip it
+                // this will help reduce server load ya'll
+                if (term.length < 3) return callback();
+                
+                // We're loading..
+                $select.parent('div').find('.selectize-control').addClass('loading');
 
-				// Search!
-				$.ajax({
+                // Search!
+                $.ajax({
 
-					// Keep this public so we can use this on the front end
-					url: SITE_URL + 'streams_core/public_ajax/field/multiple/search/<?php echo $field_type->form_slug; ?>',
+                    // Keep this public so we can use this on the front end
+                    url: SITE_URL + 'streams_core/public_ajax/field/multiple/search/<?php echo $field_type->form_slug; ?>',
 
-					// The data!
-					data: {
-						'term': encodeURIComponent(term),
-					},
+                    // The data!
+                    data: {
+                        'term': encodeURIComponent(term),
+                    },
 
-					// Do it.
-					type: 'POST',
+                    // Do it.
+                    type: 'POST',
 
-					// Error
-					error: function() {
-						callback(); // Don't do shit
-					},
+                    // Error
+                    error: function() {
+                        callback(); // Don't do shit
+                    },
 
-					// Sucksess
-					success: function(results) {
+                    // Sucksess
+                    success: function(results) {
 
-						// Return our results
-						callback($.parseJSON(results));
-					},
-				});
-			},
+                        // Return our results
+                        callback($.parseJSON(results));
+                    },
+                });
+            },
 
-			/**
-			 * Loaded / Ready
-			 * @return {void}
-			 */
-			onInitialize: function() {
+            /**
+             * Loaded / Ready
+             * @return {void}
+             */
+            onInitialize: function() {
 
-				// Set the value
-				<?php if ($entries): ?>
-				this.setValue([<?php echo implode(',', $entries->lists('id')); ?>]);
-				<?php endif; ?>
-			},
-		});
+                // Set the value
+                <?php if ($entries): ?>
+                this.setValue([<?php echo implode(',', $entries->lists('id')); ?>]);
+                <?php endif; ?>
+            },
+        });
 
-		// Inject our loader
-		$select.parent('div').find('.selectize-control').append('<?php echo Asset::img('loaders/808080.png', null, array('class' => 'animated spin spinner')); ?>');
+        // Inject our loader
+        $select.parent('div').find('.selectize-control').append('<?php echo Asset::img('loaders/808080.png', null, array('class' => 'animated spin spinner')); ?>');
 
-	});
+    });
 
 
 </script>
