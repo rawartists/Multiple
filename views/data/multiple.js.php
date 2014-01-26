@@ -4,7 +4,7 @@
     // Ready
     $(document).ready(function() {
 
-        var $select = $('select.<?php echo $field_type->form_slug; ?>-selectize');
+        var $select = $('select.<?php echo $fieldType->form_slug; ?>-selectize');
         
         $select.selectize({
 
@@ -12,8 +12,8 @@
             plugins: ['restore_on_backspace', 'optgroup_columns'],
 
             // Allow multiple
-            <?php if ($field_type->getParameter('max_selections', false)): ?>
-            maxItems: <?php echo $field_type->getParameter('max_selections'); ?>,
+            <?php if ($fieldType->getParameter('max_selections', false)): ?>
+            maxItems: <?php echo $fieldType->getParameter('max_selections'); ?>,
             <?php endif; ?>
 
             // Throttle MS
@@ -22,22 +22,13 @@
             // Disable creation
             create: false,
 
-            // Preload stuff if applicable
-            <?php //if ($field_type->totalOptions() < 1000): ?>
-            //preload: true,
-            <?php //endif; ?>
-
             // Let's always use this..
             valueField: 'id',
-
-            // What is the default label field?
-            // Note that label_format will override this
-            labelField: '<?php echo $field_type->getParameter('label_field', ($field_type->stream->title_column ? $field_type->stream->title_column : 'id')); ?>',
 
             // Search these fields
             // This is JS.. so we need it here for the plugin - it will limit the dropdown despite what's passed back w/JSON
             // We want to pass it all back though for formatting if applicable
-            searchField: '<?php echo str_replace('|', "','", $field_type->getParameter('search_fields', ($field_type->stream->title_column ? $field_type->stream->title_column : 'id'))); ?>',
+            searchField: ['<?php echo str_replace('|', "','", $fieldType->getParameter('search_fields', (isset($fieldType->stream->title_column) ? $fieldType->stream->title_column : 'id'))); ?>'],
 
             // The entries
             <?php if ($entries): ?>
@@ -56,11 +47,13 @@
                  * @param  {[type]} escape
                  * @return {string} using a view, parsed tags or whatever
                  */
-                <?php if ($field_type->getParameter('item_format', false)): ?>
                 item: function(item, escape) {
-                    return <?php echo ci()->parser->parse_string($field_type->getParameter('item_format'), ci(), true); ?>;
+                    <?php if ($fieldType->getParameter('item_format', false)): ?>
+                    return <?php echo ci()->parser->parse_string($fieldType->getParameter('item_format'), ci(), true); ?>;
+                    <?php else: ?>
+                    return '<div>' + item.<?php echo $relatedModel::getStream()->title_column; ?> + '</div>';
+                    <?php endif; ?>
                 },
-                <?php endif; ?>
 
                 /**
                  * This defines how the selected option is formatted
@@ -68,11 +61,13 @@
                  * @param  {[type]} escape
                  * @return {string} using a view, parsed tags or whatever
                  */
-                <?php if ($field_type->getParameter('option_format', false)): ?>
                 option: function(item, escape) {
-                    return <?php echo ci()->parser->parse_string($field_type->getParameter('option_format'), ci(), true); ?>;
+                    <?php if ($fieldType->getParameter('option_format', false)): ?>
+                    return <?php echo ci()->parser->parse_string($fieldType->getParameter('item_format'), ci(), true); ?>;
+                    <?php else: ?>
+                    return '<div>' + item.<?php echo $relatedModel::getStream()->title_column; ?> + '</div>';
+                    <?php endif; ?>
                 },
-                <?php endif; ?>
             },
 
             /**
@@ -94,10 +89,12 @@
                 $.ajax({
 
                     // Keep this public so we can use this on the front end
-                    url: SITE_URL + 'streams_core/public_ajax/field/multiple/search/<?php echo $field_type->form_slug; ?>',
+                    url: SITE_URL + 'streams_core/public_ajax/field/multiple/search',
 
                     // The data!
                     data: {
+                        'stream_namespace': '<?php echo $fieldType->getStream()->stream_namespace; ?>',
+                        'field_slug': '<?php echo $fieldType->getField()->field_slug; ?>',
                         'term': encodeURIComponent(term),
                     },
 

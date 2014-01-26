@@ -29,6 +29,13 @@ class Multiple extends AbstractFieldType
     public $db_col_type = 'integer';
 
     /**
+     * Alternative processing
+     * Because we save to a pivot table
+     * @var boolean
+     */
+    public $alt_process = true;
+
+    /**
      * Custom parameters
      * @var array
      */
@@ -59,26 +66,20 @@ class Multiple extends AbstractFieldType
         );
 
     /**
-     * Yes please
-     * @var boolean
+     * Relation
+     * @return object The relation object
      */
-    public $alt_process = true;
-
-    /**
-     * Our pivot table
-     */
-    public $table = null;
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // -------------------------    METHODS       ------------------------------ //
-    ///////////////////////////////////////////////////////////////////////////////
+    public function relation()
+    {
+        return $this->belongsToMany($this->getRelationClass(), $this->getTableName(), 'entry_id', 'related_id');
+    }
 
     /**
      * Fired when form is built per field
-     * @param  boolean $field 
+     * @return void
      */
     public function fieldEvent()
-    {return false;
+    {
         // Get related entries
         $entries = $this->getRelationResult();
 
@@ -87,7 +88,8 @@ class Multiple extends AbstractFieldType
             $this->view(
                 'data/multiple.js.php',
                 array(
-                    'field_type' => $this,
+                    'relatedModel' => $this->getRelationClass(),
+                    'fieldType' => $this,
                     'entries' => $entries,
                     ),
                 true
@@ -96,12 +98,36 @@ class Multiple extends AbstractFieldType
     }
 
     /**
-     * Relation
-     * @return object The relation object
+     * Fired when filters are built per field
+     * @return void
      */
-    public function relation()
+    public function filterFieldEvent()
     {
-        return $this->belongsToMany($this->getRelationClass(), $this->getTable(), 'entry_id', 'related_id');
+        // Set the value
+        $this->setValue(ci()->input->get($this->getFilterSlug('is')));
+        
+        // Get related entries
+        $relatedModel = $this->getRelationClass();
+
+        // Get it
+        if ($ids = $this->getValueIds()) {
+            $entries = $relatedModel::select('*')->whereIn('id', $ids)->get();
+        } else {
+            $entries = null;
+        }
+
+        // Basically the selectize config mkay?
+        $this->appendMetadata(
+            $this->view(
+                'data/multiple.js.php',
+                array(
+                    'relatedModel' => $this->getRelationClass(),
+                    'fieldType' => $this,
+                    'entries' => $entries,
+                    ),
+                true
+                )
+            );
     }
 
     /**
@@ -135,8 +161,8 @@ class Multiple extends AbstractFieldType
      */
     public function publicFormInput()
     {
-        // Is this a small enough dataset?
-        return form_dropdown($this->form_slug, $this->getOptions(), $this->getValueIds());
+        // TODO
+        return 'Multiple publidFormInput() needed';
     }
 
     /**
@@ -147,13 +173,10 @@ class Multiple extends AbstractFieldType
      */
     public function filterInput()
     {
-        // Set the value from the thingie
-        $this->setValue(ci()->input->get($this->getFilterSlug('is')));
-
         // Attribtues
         $attributes = array(
             'class' => $this->form_slug.'-selectize skip',
-            'placeholder' => $this->getParameter('placeholder', lang('streams:relationship.placeholder')),
+            'placeholder' => $this->getParameter('placeholder', $this->field->field_name),
             );
 
         // String em up
@@ -173,7 +196,30 @@ class Multiple extends AbstractFieldType
      */
     public function preSave()
     {
-        
+        // Delete existing
+        ci()->pdb->table($this->getTableName())->where('entry_id', $this->entry->getKey())->delete();
+
+        // Process / insert
+        $insert = array();
+
+        foreach ((array) ci()->input->post($this->form_slug) as $id) {
+
+            // Gotta have an ID
+            if ($id) {
+                $insert[] = array(
+                    'entry_id' => $this->entry->getKey(),
+                    'related_id' => $id,
+                    );
+            }
+        }
+
+        // Insert new records
+        if (! empty($insert)) {
+            ci()->pdb->table($this->getTableName())->where('entry_id', $this->entry->getKey())->insert($insert);
+        }
+
+        // Return the count
+        return count($insert);
     }
 
     /**
@@ -187,8 +233,8 @@ class Multiple extends AbstractFieldType
      * @return    mixed     null or string
      */
     public function stringOutput()
-    {return 'Poop';
-        if($entries = $this->getEntriesTitles()) {
+    {
+        if($entries = $this->getEntriesOptions()) {
             return implode(', ', $entries);
         }
 
@@ -205,8 +251,7 @@ class Multiple extends AbstractFieldType
      */
     public function pluginOutput()
     {
-        if ($entries = $this->getRelationResult())
-        {
+        if ($entries = $this->getRelationResult()) {
             return $entries->toArray();
         }
 
@@ -220,8 +265,7 @@ class Multiple extends AbstractFieldType
      */
     public function dataOutput()
     {
-        if ($entries = $this->getRelationResult())
-        {
+        if ($entries = $this->getRelationResult()) {
             return $entries;
         }
 
@@ -234,9 +278,6 @@ class Multiple extends AbstractFieldType
      */
     public function fieldAssignmentConstruct()
     {
-        // Setup
-        $this->setTable();
-
         // Duplicate our instance
         $instance = $this;
 
@@ -244,17 +285,14 @@ class Multiple extends AbstractFieldType
         $schema = ci()->pdb->getSchemaBuilder();
 
         // Drop any existing
-        $schema->dropIfExists($this->table);
+        $schema->dropIfExists($this->getTableName());
 
         /**
          * Create our pivot table
          */
-        $schema->create($this->table, function($table) use ($instance) {
+        $schema->create($this->getTableName(), function($table) use ($instance) {
             $table->integer('entry_id');
             $table->integer('related_id');
-
-            $table->index('entry_id');
-            $table->index('related_id');
         });
     }
 
@@ -264,14 +302,11 @@ class Multiple extends AbstractFieldType
      */
     public function fieldAssignmentDestruct()
     {
-        // Get our table name
-        $this->setTable();
-
         // Get the schema
         $schema = ci()->pdb->getSchemaBuilder();
 
         // Drop it like it's hot
-        $schema->dropIfExists($this->table);
+        $schema->dropIfExists($this->getTableName());
     }
 
     /**
@@ -280,14 +315,11 @@ class Multiple extends AbstractFieldType
      */
     public function namespaceDestruct()
     {
-        // Get our table name
-        $this->setTable();
-
         // Get the schema
         $schema = ci()->pdb->getSchemaBuilder();
 
         // Drop it like it's hot
-        $schema->dropIfExists($this->table);
+        $schema->dropIfExists($this->getTableName());
     }
 
     /**
@@ -296,22 +328,16 @@ class Multiple extends AbstractFieldType
      */
     public function entryDestruct()
     {
-        if (isset($this->entry->id)) {
-            // Setup
-            $this->setTable();
-
+        if ($id = $this->entry->getKey()) {
+            
             // Delete by entry_id or related_id
             ci()->pdb
-                ->table($this->table)
-                ->where('entry_id', $this->entry->id)
-                ->orWhere('related_id', $this->entry->id)
+                ->table($this->getTableName())
+                ->where('entry_id', $id)
+                ->orWhere('related_id', $id)
                 ->delete();
         }
     }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // -------------------------    PARAMETERS    ------------------------------ //
-    ///////////////////////////////////////////////////////////////////////////////
 
     /**
      * Choose a stream to relate to.. or remote source
@@ -333,6 +359,16 @@ class Multiple extends AbstractFieldType
     public function paramOptionFormat($value = '')
     {
         return form_input('option_format', $value);
+    }
+
+    /**
+     * Label format
+     * @param  string $value
+     * @return html
+     */
+    public function paramLabelFormat($value = '')
+    {
+        return form_input('label_format', $value);
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -377,15 +413,11 @@ class Multiple extends AbstractFieldType
         exit;
     }
 
-    ///////////////////////////////////////////////////////////////////////////////
-    // -------------------------     UTILITIES    ------------------------------ //
-    ///////////////////////////////////////////////////////////////////////////////
-
     /**
      * Get the table
      * @return string
      */
-    public function getTable()
+    public function getTableName()
     {
         // Table name
         return $this->getStream()->stream_prefix.$this->getStream()->stream_slug.'_'.$this->field->field_slug;
@@ -397,8 +429,11 @@ class Multiple extends AbstractFieldType
      */
     public function getValueIds()
     {
-        // List related entry IDs
-        return $this->getRelationResult()->lists('id');
+        // Boom
+        $entries = $this->getRelationResult();
+
+        // Format
+        return $entries ? $entries->getEntryOptions('id') : false;
     }
 
     /**
@@ -407,41 +442,7 @@ class Multiple extends AbstractFieldType
      */
     public function getOptions()
     {
-        // Get options
-        $options = array();
-
-        if ($relation_class = $this->getRelationClass()) {
-
-            $instance = new $relation_class;
-
-            if ($instance instanceof EntryModel) {
-            
-                list($stream_slug, $stream_namespace) = explode('.', $this->getParameter('stream'));
-
-                $stream = StreamModel::findBySlugAndNamespace($stream_slug, $stream_namespace);
-
-                $options = $relation_class::stream($stream_slug, $stream_namespace)->limit(1000)->select('*')->get()->toArray();
-                
-                $option_format = $this->getParameter('option_format', '{{ '.($stream->title_column ? $stream->title_column : 'id').' }}'); 
-
-            } else {
-
-                $options = $relation_class::limit(1000)->select('*')->get()->toArray();
-
-                $option_format = $this->getParameter('option_format', '{{ '.$this->getParameter('title_field', 'id').' }}'); 
-
-            }
-        }
-
-        // Format options
-        $formatted_options = array();
-
-        foreach ($options as $option) {
-                $formatted_options[$option[$this->getParameter('value_field', 'id')]] = ci()->parser->parse_string($option_format, $option, true, false, array(), false);
-        }
-
-        // Boom
-        return $formatted_options;
+        return array();
     }
 
     /**
@@ -449,12 +450,12 @@ class Multiple extends AbstractFieldType
      * @param  mixed $value string or bool
      * @return array
      */
-    protected function getEntriesTitles($value = false)
+    protected function getEntriesOptions($attribute = null)
     {
         // Boom
         $entries = $this->getRelationResult();
 
         // Format
-        return $entries ? $entries->getEntryOptions() : false;
+        return $entries ? $entries->getEntryOptions($attribute) : false;
     }
 }
