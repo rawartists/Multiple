@@ -28,7 +28,7 @@
             // Search these fields
             // This is JS.. so we need it here for the plugin - it will limit the dropdown despite what's passed back w/JSON
             // We want to pass it all back though for formatting if applicable
-            searchField: ['<?php echo str_replace('|', "','", $fieldType->getParameter('search_fields', (isset($fieldType->stream->title_column) ? $fieldType->stream->title_column : 'id'))); ?>'],
+            searchField: ['<?php echo str_replace('|', "','", $fieldType->getParameter('search_columns', (isset($fieldType->stream->title_column) ? $fieldType->stream->title_column : 'id'))); ?>'],
 
             // The entries
             <?php if ($entries): ?>

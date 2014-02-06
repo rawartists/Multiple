@@ -42,7 +42,7 @@ class Multiple extends AbstractFieldType
     public $custom_parameters = array(
         'stream',
         'max_selections',
-        'search_fields',
+        'search_columns',
         'placeholder',
         'option_format',
         'label_format',
@@ -405,7 +405,7 @@ class Multiple extends AbstractFieldType
             echo $relatedModel::streamsMultipleAjaxSearch($fieldType);
         } else {
             echo $relatedModel::select(explode('|', $fieldType->getParameter('select_fields', '*')))
-                ->where($fieldType->getParameter('search_fields', 'id'), 'LIKE', '%'.$post['term'].'%')
+                ->where($fieldType->getParameter('search_columns', 'id'), 'LIKE', '%'.$post['term'].'%')
                 ->take(10)
                 ->get();
         }
