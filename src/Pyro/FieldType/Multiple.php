@@ -1,9 +1,9 @@
 <?php namespace Pyro\FieldType;
 
 use Pyro\Model\Eloquent;
-use Pyro\Module\Streams_core\AbstractFieldType;
-use Pyro\Module\Streams_core\FieldModel;
-use Pyro\Module\Streams_core\StreamModel;
+use Pyro\Module\Streams\FieldType\FieldTypeAbstract;
+use Pyro\Module\Streams\Field\FieldModel;
+use Pyro\Module\Streams\Stream\StreamModel;
 
 /**
  * PyroStreams Multiple Field Type
@@ -14,7 +14,7 @@ use Pyro\Module\Streams_core\StreamModel;
  * @license        http://parse19.com/pyrostreams/docs/license
  * @link        http://parse19.com/pyrostreams
  */
-class Multiple extends AbstractFieldType
+class Multiple extends FieldTypeAbstract
 {
     /**
      * Field type slug
