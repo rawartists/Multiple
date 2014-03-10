@@ -1,73 +1,68 @@
 <?php namespace Pyro\FieldType;
 
-use Pyro\Model\Eloquent;
 use Pyro\Module\Streams\FieldType\FieldTypeAbstract;
-use Pyro\Module\Streams\Field\FieldModel;
 use Pyro\Module\Streams\Stream\StreamModel;
 
 /**
- * PyroStreams Multiple Field Type
+ * Class Multiple
  *
- * @package        PyroCMS\Core\Modules\Streams Core\Field Types
- * @author        Parse19
- * @copyright    Copyright (c) 2011 - 2012, Parse19
- * @license        http://parse19.com/pyrostreams/docs/license
- * @link        http://parse19.com/pyrostreams
+ * @package Pyro\FieldType
+ * @author  AI Web Systems, Inc. - Ryan Thompson
  */
 class Multiple extends FieldTypeAbstract
 {
     /**
      * Field type slug
+     *
      * @var string
      */
     public $field_type_slug = 'multiple';
 
     /**
      * DB column type
+     *
      * @var string
      */
-    public $db_col_type = 'integer';
+    public $db_col_type = false;
 
     /**
-     * Alternative processing
-     * Because we save to a pivot table
+     * Alt process
+     *
      * @var boolean
      */
     public $alt_process = true;
 
     /**
      * Custom parameters
+     *
      * @var array
      */
     public $custom_parameters = array(
-        'stream',
-        'max_selections',
-        'search_columns',
-        'placeholder',
-        'option_format',
-        'label_format',
-        'method',
+        'input_method',
         'relation_class',
-        );
+    );
 
     /**
      * Version
+     *
      * @var string
      */
     public $version = '2.0';
 
     /**
      * Author
+     *
      * @var  array
      */
     public $author = array(
         'name' => 'Ryan Thompson - PyroCMS',
-        'url' => 'http://pyrocms.com/'
-        );
+        'url'  => 'https://www.pyrocms.com/about/the-team'
+    );
 
     /**
      * Relation
-     * @return object The relation object
+     *
+     * @return null|\Pyro\Module\Streams\FieldType\Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function relation()
     {
@@ -75,59 +70,26 @@ class Multiple extends FieldTypeAbstract
     }
 
     /**
-     * Fired when form is built per field
-     * @return void
+     * Field event
      */
     public function fieldEvent()
     {
-        // Get related entries
-        $entries = $this->getRelationResult();
+        if ($this->getParameter('use_ajax')) {
+            $class = $this->getRelationClass();
+            $model = new $class;
 
-        // Basically the selectize config mkay?
-        $this->appendMetadata(
-            $this->view(
-                'data/multiple.js.php',
-                array(
-                    'relatedModel' => $this->getRelationClass(),
-                    'fieldType' => $this,
-                    'entries' => $entries,
-                    ),
-                true
-                )
+            $data = array(
+                'value'          => null,
+                'jquerySelector' => $this->form_slug . '-selectize',
+                'valueField'     => $model->getFieldTypeRelationshipValueField(),
+                'searchFields'   => $model->getFieldTypeRelationshipSearchFields(),
+                'itemTemplate'   => $model->getPresenter()->getFieldTypeRelationshipItemTemplate(),
+                'optionTemplate' => $model->getPresenter()->getFieldTypeRelationshipOptionTemplate(),
+                'relationClass'  => $this->getRelationClass(),
             );
-    }
 
-    /**
-     * Fired when filters are built per field
-     * @return void
-     */
-    public function filterFieldEvent()
-    {
-        // Set the value
-        $this->setValue(ci()->input->get($this->getFilterSlug('is')));
-        
-        // Get related entries
-        $relatedModel = $this->getRelationClass();
-
-        // Get it
-        if ($ids = $this->getValueIds()) {
-            $entries = $relatedModel::select('*')->whereIn('id', $ids)->get();
-        } else {
-            $entries = null;
+            $this->appendMetadata($this->view('fragments/relationship.js.php', $data, true));
         }
-
-        // Basically the selectize config mkay?
-        $this->appendMetadata(
-            $this->view(
-                'data/multiple.js.php',
-                array(
-                    'relatedModel' => $this->getRelationClass(),
-                    'fieldType' => $this,
-                    'entries' => $entries,
-                    ),
-                true
-                )
-            );
     }
 
     /**
@@ -138,31 +100,52 @@ class Multiple extends FieldTypeAbstract
      */
     public function formInput()
     {
-        // Attribtues
-        $attributes = array(
-            'class' => $this->form_slug.'-selectize skip',
-            'placeholder' => $this->getParameter('placeholder', lang('streams:relationship.placeholder')),
-            );
+        $options = array(null => lang_label($this->getPlaceholder())) + $this->getOptions();
 
-        // String em up
-        $attribute_string = '';
-
-        foreach ($attributes as $attribute => $value) {
-            $attribute_string .= $attribute.'="'.$value.'" ';
+        if (!$this->getParameter('use_ajax')) {
+            $attributes = '';
+        } else {
+            $attributes = 'class="' . $this->form_slug . '-selectize skip"';
         }
 
-        // Return an HTML dropdown
-        return form_dropdown($this->form_slug.'[]', array(), null, $attribute_string);
+        return form_dropdown($this->form_slug, $options, $this->value, $attributes);
     }
 
     /**
      * Output the form input for frontend use
-     * @return string 
+     *
+     * @return string
      */
     public function publicFormInput()
     {
-        // TODO
-        return 'Multiple publidFormInput() needed';
+        return form_dropdown($this->form_slug, $this->getOptions(), $this->value);
+    }
+
+    /**
+     * Process before saving
+     *
+     * @return string
+     */
+    public function preSave()
+    {
+        $table = $this->getTableName();
+
+        ci()->pdb->table($table)->where('entry_id', $this->entry->getKey())->delete();
+
+        $insert = array();
+
+        foreach ((array)ci()->input->post($this->form_slug) as $id) {
+            if ($id) {
+                $insert[] = array(
+                    'entry_id'   => $this->entry->getKey(),
+                    'related_id' => $id,
+                );
+            }
+        }
+
+        if (!empty($insert)) {
+            ci()->pdb->table($table)->insert($insert);
+        }
     }
 
     /**
@@ -173,178 +156,60 @@ class Multiple extends FieldTypeAbstract
      */
     public function filterInput()
     {
-        // Attribtues
-        $attributes = array(
-            'class' => $this->form_slug.'-selectize skip',
-            'placeholder' => $this->getParameter('placeholder', $this->field->field_name),
-            );
+        $options = array(null => lang_label($this->getPlaceholder())) + $this->getOptions();
 
-        // String em up
-        $attribute_string = '';
-
-        foreach ($attributes as $attribute => $value) {
-            $attribute_string .= $attribute.'="'.$value.'" ';
-        }
-
-        // Return an HTML dropdown
-        return form_dropdown($this->getFilterSlug('is'), array(), null, $attribute_string);
+        return form_dropdown($this->getFilterSlug('is'), $options, $this->getFilterValue('is'));
     }
 
     /**
-     * Process before saving
-     * @return string
-     */
-    public function preSave()
-    {
-        // Delete existing
-        ci()->pdb->table($this->getTableName())->where('entry_id', $this->entry->getKey())->delete();
-
-        // Process / insert
-        $insert = array();
-
-        foreach ((array) ci()->input->post($this->form_slug) as $id) {
-
-            // Gotta have an ID
-            if ($id) {
-                $insert[] = array(
-                    'entry_id' => $this->entry->getKey(),
-                    'related_id' => $id,
-                    );
-            }
-        }
-
-        // Insert new records
-        if (! empty($insert)) {
-            ci()->pdb->table($this->getTableName())->where('entry_id', $this->entry->getKey())->insert($insert);
-        }
-
-        // Return the count
-        return count($insert);
-    }
-
-    /**
-     * Pre Ouput
+     * String output
      *
-     * Process before outputting on the CP. Since
-     * there is less need for performance on the back end,
-     * this is accomplished via just grabbing the title column
-     * and the id and displaying a link (ie, no joins here).
-     *
-     * @return    mixed     null or string
+     * @return  mixed   null or string
      */
     public function stringOutput()
     {
-        if($entries = $this->getEntriesOptions()) {
-            return implode(', ', $entries);
+        if ($relatedModel = $this->getRelationResult()) {
+            if (!$relatedModel instanceof RelationshipInterface) {
+                throw new ClassNotInstanceOfRelationshipInterfaceException;
+            }
+
+            return $relatedModel->getFieldTypeRelationshipTitle();
         }
 
         return null;
     }
 
     /**
-     * Pre Ouput Plugin
-     * 
-     * This takes the data from the join array
-     * and formats it using the row parser.
-     * 
+     * Plugin output
+     *
      * @return array
      */
     public function pluginOutput()
     {
-        if ($entries = $this->getRelationResult()) {
-            return $entries->toArray();
+        if ($relatedModel = $this->getRelationResult()) {
+            return $relatedModel;
         }
 
         return null;
     }
 
     /**
-     * Pre Ouput Data
-     * 
-     * @return array
+     * Data output
+     *
+     * @return RelationClassModel
      */
     public function dataOutput()
     {
-        if ($entries = $this->getRelationResult()) {
-            return $entries;
-        }
-
-        return null;
-    }
-
-    /**
-     * Run this when the field gets assigned
-     * @return void
-     */
-    public function fieldAssignmentConstruct()
-    {
-        // Duplicate our instance
-        $instance = $this;
-
-        // Get the schema
-        $schema = ci()->pdb->getSchemaBuilder();
-
-        // Drop any existing
-        $schema->dropIfExists($this->getTableName());
-
-        /**
-         * Create our pivot table
-         */
-        $schema->create($this->getTableName(), function($table) use ($instance) {
-            $table->integer('entry_id');
-            $table->integer('related_id');
-        });
-    }
-
-    /**
-     * Run this when the field gets unassigned
-     * @return void
-     */
-    public function fieldAssignmentDestruct()
-    {
-        // Get the schema
-        $schema = ci()->pdb->getSchemaBuilder();
-
-        // Drop it like it's hot
-        $schema->dropIfExists($this->getTableName());
-    }
-
-    /**
-     * Do this when the namespace is destroyed
-     * @return void
-     */
-    public function namespaceDestruct()
-    {
-        // Get the schema
-        $schema = ci()->pdb->getSchemaBuilder();
-
-        // Drop it like it's hot
-        $schema->dropIfExists($this->getTableName());
-    }
-
-    /**
-     * Ran when the entry is deleted
-     * @return void
-     */
-    public function entryDestruct()
-    {
-        if ($id = $this->entry->getKey()) {
-            
-            // Delete by entry_id or related_id
-            ci()->pdb
-                ->table($this->getTableName())
-                ->where('entry_id', $id)
-                ->orWhere('related_id', $id)
-                ->delete();
-        }
+        return $this->pluginOutput();
     }
 
     /**
      * Choose a stream to relate to.. or remote source
+     *
      * @param  mixed $value
      * @return string
      */
-    public function paramStream($value = '')
+    public function paramStream($value = null)
     {
         $options = StreamModel::getStreamAssociativeOptions();
 
@@ -352,110 +217,115 @@ class Multiple extends FieldTypeAbstract
     }
 
     /**
-     * Option format
-     * @param  string $value
-     * @return html
-     */
-    public function paramOptionFormat($value = '')
-    {
-        return form_input('option_format', $value);
-    }
-
-    /**
-     * Label format
-     * @param  string $value
-     * @return html
-     */
-    public function paramLabelFormat($value = '')
-    {
-        return form_input('label_format', $value);
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // -------------------------       AJAX       ------------------------------ //
-    ///////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Search for entries!
-     * @return string JSON
-     */
-    public function ajaxSearch()
-    {
-        // Get the post data
-        $post = ci()->input->post();
-
-
-        /**
-         * Get THIS field and type
-         */
-        $field = FieldModel::findBySlugAndNamespace($post['field_slug'], $post['stream_namespace']);
-        $fieldType = $field->getType(null);
-
-        
-        /**
-         * Get the relationClass
-         */
-        $relatedModel = $fieldType->getRelationClass();
-
-
-        /**
-         * Search for RELATED entries
-         */
-        if (method_exists($relatedModel, 'streamsMultipleAjaxSearch')) {
-            echo $relatedModel::streamsMultipleAjaxSearch($fieldType);
-        } else {
-            echo $relatedModel::select(explode('|', $fieldType->getParameter('select_fields', '*')))
-                ->where($fieldType->getParameter('search_columns', 'id'), 'LIKE', '%'.$post['term'].'%')
-                ->take(10)
-                ->get();
-        }
-
-        exit;
-    }
-
-    /**
-     * Get the table
-     * @return string
-     */
-    public function getTableName()
-    {
-        // Table name
-        return $this->getStream()->stream_prefix.$this->getStream()->stream_slug.'_'.$this->field->field_slug;
-    }
-
-    /**
-     * Get IDs for values
-     * @return array 
-     */
-    public function getValueIds()
-    {
-        // Boom
-        $entries = $this->getRelationResult();
-
-        // Format
-        return $entries ? $entries->getEntryOptions('id') : false;
-    }
-
-    /**
      * Options
+     *
      * @return array
      */
     public function getOptions()
     {
+        if (!$this->getParameter('use_ajax')) {
+            if ($relatedClass = $this->getRelationClass()) {
+
+                $relatedModel = new $relatedClass;
+
+                if (!$relatedModel instanceof RelationshipInterface) {
+                    throw new ClassNotInstanceOfRelationshipInterfaceException;
+                }
+
+                return $relatedModel->getFieldTypeRelationshipOptions($this);
+            }
+        }
+
         return array();
     }
 
     /**
-     * Get values for dropdown
-     * @param  mixed $value string or bool
-     * @return array
+     * Get column name
+     *
+     * @return string
      */
-    protected function getEntriesOptions($attribute = null)
+    public function getColumnName()
     {
-        // Boom
-        $entries = $this->getRelationResult();
+        return parent::getColumnName() . '_id';
+    }
 
-        // Format
-        return $entries ? $entries->getEntryOptions($attribute) : false;
+    /**
+     * Get placeholder
+     *
+     * @return string
+     */
+    protected function getPlaceholder()
+    {
+        if ($this->getParameter('use_ajax')) {
+            $placeholder = lang('streams.multiple.placeholder');
+        } else {
+            $placeholder = $this->field->field_name;
+        }
+
+        return $this->getParameter('placeholder', $placeholder);
+    }
+
+    /**
+     * Run this when the field gets assigned
+     *
+     * @return void
+     */
+    public function fieldAssignmentConstruct()
+    {
+        $instance = $this;
+
+        $schema = ci()->pdb->getSchemaBuilder();
+
+        $schema->dropIfExists($this->getTableName());
+
+        $schema->create(
+            $this->getTableName(),
+            function ($table) use ($instance) {
+                $table->integer('entry_id');
+                $table->integer('related_id');
+            }
+        );
+    }
+
+    /**
+     * Field assignment destruct
+     */
+    public function fieldAssignmentDestruct()
+    {
+        $schema = ci()->pdb->getSchemaBuilder();
+
+        $schema->dropIfExists($this->getTableName());
+    }
+
+    /**
+     * Namespace destruct
+     */
+    public function namespaceDestruct()
+    {
+        $this->fieldAssignmentConstruct();
+    }
+
+    /**
+     * Get the table
+     *
+     * @return string
+     */
+    public function getTableName()
+    {
+        return $this->getStream()->stream_prefix . $this->getStream()->stream_slug . '_' . $this->field->field_slug;
+    }
+
+    /**
+     * Search
+     *
+     * @return string
+     */
+    public function ajaxSearch()
+    {
+        $class = ci()->input->post('relation_class');
+        $model = new $class;
+        $term  = urldecode(ci()->input->post('term'));
+
+        echo $model->getFieldTypeRelationshipResults($term);
     }
 }
