@@ -168,12 +168,10 @@ class Multiple extends FieldTypeAbstract
      */
     public function stringOutput()
     {
-        if ($relatedModel = $this->getRelationResult()) {
-            if (!$relatedModel instanceof RelationshipInterface) {
-                throw new ClassNotInstanceOfRelationshipInterfaceException;
-            }
+        $model = $this->getParameter('relation_class');
 
-            return $relatedModel->getFieldTypeRelationshipTitle();
+        if ($collection = $this->getRelationResult() and $collection->count() and $model = new $model) {
+            return implode(', ', $collection->lists($model->getTitleColumn()));
         }
 
         return null;
@@ -186,8 +184,8 @@ class Multiple extends FieldTypeAbstract
      */
     public function pluginOutput()
     {
-        if ($relatedModel = $this->getRelationResult()) {
-            return $relatedModel;
+        if ($collection = $this->getRelationResult()) {
+            return $collection;
         }
 
         return null;
