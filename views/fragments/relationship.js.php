@@ -12,7 +12,7 @@
             plugins: ['restore_on_backspace'],
 
             <?php if ($value): ?>
-            options: [<?php echo $value; ?>],
+            options: <?php echo $value; ?>,
             <?php endif; ?>
 
             render: {
@@ -41,7 +41,7 @@
             },
             onInitialize: function () {
                 <?php if ($value): ?>
-                this.setValue('<?php echo $value->id; ?>');
+                this.setValue(<?php echo json_encode($value->lists('id')); ?>);
                 <?php endif; ?>
             }
         });

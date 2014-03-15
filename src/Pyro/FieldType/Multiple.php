@@ -79,7 +79,7 @@ class Multiple extends FieldTypeAbstract
             $model = new $class;
 
             $data = array(
-                'value'          => null,
+                'value'          => $this->getRelationResult(),
                 'jquerySelector' => $this->form_slug . '-selectize',
                 'valueField'     => $model->getFieldTypeRelationshipValueField(),
                 'searchFields'   => $model->getFieldTypeRelationshipSearchFields(),
