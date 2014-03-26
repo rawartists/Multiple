@@ -41,7 +41,7 @@
             },
             onInitialize: function () {
                 <?php if ($value): ?>
-                this.setValue(<?php echo json_encode($value->lists('id')); ?>);
+                this.setValue(<?php echo json_encode(array_keys($value->lists('id', 'id'))); ?>);
                 <?php endif; ?>
             }
         });
