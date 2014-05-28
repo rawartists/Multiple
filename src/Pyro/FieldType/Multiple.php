@@ -90,6 +90,12 @@ class Multiple extends FieldTypeAbstract
 
             $this->appendMetadata($this->view('fragments/relationship.js.php', $data, true));
         }
+
+        if ($this->getParameter('input_method') == 'checkbox') {
+
+            $this->appendMetadata($this->view('fragments/checkbox.js.php', null, true));
+
+        }
     }
 
     /**
@@ -100,16 +106,98 @@ class Multiple extends FieldTypeAbstract
      */
     public function formInput()
     {
-        $options = array(null => lang_label($this->getPlaceholder())) + $this->getOptions();
 
-        if (!$this->getParameter('use_ajax')) {
-            $attributes = '';
+        if ($this->getParameter('input_method') == 'checkbox') {
+
+            return $this->formInputCheckbox();
+
         } else {
-            $attributes = 'class="' . $this->form_slug . '-selectize skip"';
+
+            $options = array(null => lang_label($this->getPlaceholder())) + $this->getOptions();
+
+            if (!$this->getParameter('use_ajax')) {
+                $attributes = '';
+            } else {
+                $attributes = 'class="' . $this->form_slug . '-selectize skip"';
+            }
+
+            return form_multiselect($this->form_slug . '[]', $options, $this->value, $attributes);
+
         }
 
-        return form_multiselect($this->form_slug.'[]', $options, $this->value, $attributes);
     }
+
+    /**
+     * Form input checkbox
+     * Assumes that we have a header, and individual sections
+     *
+     * @return string
+     */
+    public function formInputCheckbox()
+    {
+
+        $options  = $this->getOptions();
+        $selected = $this->getRelationResult()->lists('id');
+        $groups   = array();
+
+        foreach ($options as $header => $section) {
+
+            foreach ($section as $title => $values) {
+
+                $output = '';
+
+                foreach ($values as $value => $name) {
+
+
+                    $checked = (in_array($value, $selected)) ? true : false;
+                    $data    = array(
+                        'name'    => $this->form_slug . '[]',
+                        'id'      => $this->form_slug . '-' . $value,
+                        'value'   => $value,
+                        'checked' => $checked,
+                        'style'   => 'margin:10px',
+                        'data-header' => strtolower(url_title($header)),
+                        'data-section' => strtolower(url_title($title))
+                    );
+
+                    $output .= form_checkbox($data) . form_label($name, $this->form_slug . '-' . $value) . '<br>';
+
+                }
+
+                $groups[$header][$title] = $output;
+
+            }
+
+        }
+
+        $results = '';
+        foreach ($groups as $header => $section) {
+
+            $results .= '<div class="row p-b p-t">';
+            $results .= '<div class="col-lg-12">';
+            $results .= '<strong>' . $header . '</strong>';
+            $results .= '<br><small class=""><a href="#" class="checkbox_header" data-type="all" data-header="'.strtolower(url_title($header)).'">All</a>';
+            $results .= ' |  <a href="#" class="checkbox_header" data-type="none" data-header="'.strtolower(url_title($header)).'">None</a></small>';
+            $results .= '</div>';
+            $results .= '</div>';
+            $results .= '<div class="row m-b">';
+
+            foreach ($section as $name => $output) {
+                $results .= '<div class="col-lg-3"><h5>' . $name . '</h5>';
+                $results .= '<small class=""><a href="#" class="checkbox_header" data-type="all" data-section="'.strtolower(url_title($name)).'">All</a>';
+                $results .= ' |  <a href="#" class="checkbox_header" data-type="none" data-section="'.strtolower(url_title($name)).'">None</a></small><br>';
+                $results .=  $output;
+                $results .= '</div>';
+            }
+
+            $results .= '</div>';
+
+        }
+
+        return $results;
+
+    }
+
 
     /**
      * Output the form input for frontend use
@@ -146,6 +234,8 @@ class Multiple extends FieldTypeAbstract
         if (!empty($insert)) {
             ci()->pdb->table($table)->insert($insert);
         }
+
+        ci()->cache->forget($this->getStream()->stream_namespace .".*");
     }
 
     /**
@@ -221,6 +311,7 @@ class Multiple extends FieldTypeAbstract
      */
     public function getOptions()
     {
+
         if (!$this->getParameter('use_ajax')) {
             if ($relatedClass = $this->getRelationClass()) {
 
