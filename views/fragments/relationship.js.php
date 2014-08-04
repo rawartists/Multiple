@@ -11,8 +11,15 @@
             searchField: <?php echo json_encode($searchFields); ?>,
             plugins: ['restore_on_backspace'],
 
+
+            <?php if ($defaultValue): ?>
+            options: [<?php echo $defaultValue; ?>],
+            <?php else: ?>
+
             <?php if ($value): ?>
             options: <?php echo $value; ?>,
+            <?php endif; ?>
+
             <?php endif; ?>
 
             render: {
@@ -40,9 +47,17 @@
                 });
             },
             onInitialize: function () {
+
+                <?php if ($defaultValue): ?>
+                this.setValue(<?php echo json_encode(array_keys(array($defaultValue->id => $defaultValue->id))); ?>);
+                <?php else: ?>
+
                 <?php if ($value): ?>
                 this.setValue(<?php echo json_encode(array_keys($value->lists('id', 'id'))); ?>);
                 <?php endif; ?>
+
+                <?php endif; ?>
+
             }
         });
     });

@@ -78,7 +78,19 @@ class Multiple extends FieldTypeAbstract
             $class = $this->getRelationClass();
             $model = new $class;
 
+            $defaultValue = false;
+
+            // Let's see if we have a default value set
+            if(array_key_exists($this->field->field_slug, $this->defaults)) {
+
+               $defaultValue = $this->defaults[$this->field->field_slug];
+
+            }
+
+            //$defaultValue = ($this->value) ? $this->value : $this->getRelationResult();
+
             $data = array(
+                'defaultValue'   => $defaultValue,
                 'value'          => $this->getRelationResult(),
                 'jquerySelector' => $this->form_slug . '-selectize',
                 'valueField'     => $model->getFieldTypeRelationshipValueField(),
